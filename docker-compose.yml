@@ -1,0 +1,20 @@
+version: '3'
+
+networks:
+  local_network:
+    external: true
+
+services:
+  presentation-service:
+    image: presentation-service
+    container_name: presentation-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+    env_file:
+      - .env.production
+    networks:
+      - local_network
