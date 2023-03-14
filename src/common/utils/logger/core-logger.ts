@@ -1,17 +1,22 @@
+import * as fastStringify from "fast-safe-stringify";
 import * as moment from "moment";
 import { WinstonModule } from "nest-winston";
 import { APP_CONFIG } from "src/infrastructure/configs";
 import * as winston from "winston";
 import "winston-daily-rotate-file";
 
-const format = winston.format.combine(
-	winston.format.timestamp(),
-	winston.format.ms(),
-	winston.format.printf(({ context, level, timestamp, ms, message }) => {
-		const timestampString = moment(timestamp).toLocaleString();
-		return `[${timestampString}] : [${level}] : [${context}] : ${message} ${ms}`;
-	}),
-);
+/**
+ * @description Example:   Logger.debug ("debug", "error", ["debug 3"], {key: "value"}, "and many parameters")
+ */
+const formatFunction = winston.format.printf(({ context, level, timestamp, ms, message }) => {
+	const timestampString = moment(timestamp).toLocaleString();
+
+	const outMessage = typeof message === "object" ? fastStringify.default(message) : message;
+
+	return `[${timestampString}] : [${level}] : [${context}] : ${outMessage} ${ms}\n`;
+});
+
+const format = winston.format.combine(winston.format.timestamp(), winston.format.ms(), formatFunction);
 
 const logTransports: winston.transport[] = [];
 

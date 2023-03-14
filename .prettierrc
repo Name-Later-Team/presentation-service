@@ -3,5 +3,8 @@
   "trailingComma": "all",
   "tabWidth": 4,
   "printWidth": 120,
-  "useTabs": true
+  "useTabs": false,
+  "arrowParens": "always",
+  "semi": true,
+  "singleAttributePerLine": false
 }
