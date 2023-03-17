@@ -15,3 +15,12 @@ export const CORS_CONFIG = {
 	origin: process.env.ORIGIN || "*",
 	credential: Boolean(process.env.CREDENTIAL).valueOf() || false,
 } as const;
+
+export const DATABASE_CONFIG = {
+	host: process.env.DB_HOST || "",
+	port: process.env.DB_PORT ? +process.env.DB_PORT : 0,
+	username: process.env.DB_USERNAME || "",
+	password: process.env.DB_PASSWORD || "",
+	dbName: process.env.DB_NAME || "",
+	migrationsPath: process.env.DB_MIGRATION_PATH || "",
+} as const;

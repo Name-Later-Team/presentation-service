@@ -1,18 +1,16 @@
-import { Controller, Get } from "@nestjs/common";
-import { AppService } from "./app.service";
+import { Controller, Get, HttpCode } from "@nestjs/common";
+import { DataResponse } from "./core/response";
 
 @Controller()
 export class AppController {
-	constructor(private readonly appService: AppService) {}
+    constructor() {}
 
-	@Get()
-	getHello(): string {
-		console.log("asd");
-		return this.appService.getHello();
-	}
+    @Get()
+    getHomePage() {
+        return new DataResponse({ service: "Presentation Service", version: "v1" });
+    }
 
-	@Get("/ping")
-	ping(): string {
-		return this.appService.ping();
-	}
+    @Get("favicon.ico")
+    @HttpCode(204)
+    getFavicon() {}
 }
