@@ -6,7 +6,7 @@ import { DataSource } from "typeorm";
 import { PresentationSchema } from "../database/schemas";
 import { GenericRepository } from "./generic.repository";
 
-export const PRESENTATION_REPOSITORY_TOKEN = Symbol("PresentationRepository");
+export const PRESENTATION_REPO_TOKEN = Symbol("PresentationRepository");
 
 @Injectable()
 export class PresentationRepository extends GenericRepository<Presentation> implements IPresentationRepository {

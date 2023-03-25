@@ -1,18 +1,26 @@
-import { Controller, Get, Inject } from "@nestjs/common";
-import { IPresentationRepository } from "src/core/repositories";
-import { DataResponse } from "src/core/response";
-import { PRESENTATION_REPOSITORY_TOKEN } from "src/infrastructure/repositories";
+import { Body, Controller, Inject, Post, Req } from "@nestjs/common";
+import { Request } from "express";
+import { CreatePresentationDto } from "src/core/dtos";
+import { CreatedResponse } from "src/core/response";
+import { PresentationService, PRESENTATION_SERVICE_TOKEN } from "src/infrastructure/services";
+import { CreatePresentationValidationPipe } from "./pipes/create-presentation-validation.pipe";
 
 @Controller("v1/presentations")
 export class PresentationControllerV1 {
-    constructor(
-        @Inject(PRESENTATION_REPOSITORY_TOKEN) private readonly _presentationRepository: IPresentationRepository,
-    ) {}
+    constructor(@Inject(PRESENTATION_SERVICE_TOKEN) private readonly _presentationService: PresentationService) {}
 
-    @Get("")
-    async getAllPresentationAsync() {
-        // !this is demo logic, you must change this code to meet the bussiness use cases
-        const res = await this._presentationRepository.getAllRecordsAsync();
-        return new DataResponse(res);
+    @Post("")
+    async createPresentationAsync(
+        @Req() request: Request,
+        @Body(new CreatePresentationValidationPipe()) createPresentationDto: CreatePresentationDto,
+    ) {
+        const { userinfo } = request;
+        await this._presentationService.createPresentationWithDefaultSlideAsync({
+            presentationName: createPresentationDto.name,
+            userDisplayName: userinfo.displayName,
+            userId: userinfo.identifier,
+        });
+
+        return new CreatedResponse();
     }
 }
