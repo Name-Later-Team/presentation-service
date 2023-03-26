@@ -7,25 +7,25 @@ import { Repository } from "typeorm";
  * @description This class is an implementation of core genereic repository
  */
 export abstract class GenericRepository<T> implements IGenericRepository<T> {
-	constructor(private readonly _repository: Repository<T>) {}
+    constructor(protected readonly _repository: Repository<T>) {}
 
-	getAllRecordsAsync(): Promise<T[]> {
-		return this._repository.find();
-	}
+    getManyRecordAsync(limit: number, offset: number): Promise<T[]> {
+        return this._repository.find({ skip: offset, take: limit });
+    }
 
-	getRecordByIdAsync(id: string | number): Promise<T> {
-		return this._repository.createQueryBuilder().where({ id }).getOne();
-	}
+    getRecordByIdAsync(id: number): Promise<T> {
+        return this._repository.createQueryBuilder().where({ id }).getOne();
+    }
 
-	saveRecordAsync(entity: Partial<T>): Promise<T> {
-		return this._repository.save(entity as T);
-	}
+    saveRecordAsync(entity: Partial<T>): Promise<T> {
+        return this._repository.save(entity as T);
+    }
 
-	updateRecordByIdAsync(id: string | number, entity: Partial<T>): Promise<any> {
-		return this._repository.update(id, entity as any);
-	}
+    updateRecordByIdAsync(id: number, entity: Partial<T>) {
+        return this._repository.update(id, entity as any);
+    }
 
-	deleteRecordByIdAsync(id: string | number): Promise<any> {
-		return this._repository.delete(id);
-	}
+    deleteRecordByIdAsync(id: number) {
+        return this._repository.delete(id);
+    }
 }

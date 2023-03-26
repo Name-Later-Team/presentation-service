@@ -1,5 +1,5 @@
 export class IdentifierEntityPart {
-	id: string | number;
+	id: number;
 }
 
 export class TimeTrackingEntityPart {

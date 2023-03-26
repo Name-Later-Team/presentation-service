@@ -1,0 +1,86 @@
+import { Inject, Logger } from "@nestjs/common";
+import { Injectable } from "@nestjs/common/decorators";
+import * as moment from "moment";
+import { PresentationGenerator } from "src/common/utils/generators";
+import { Presentation } from "src/core/entities";
+import {
+    IPresentationRepository,
+    IPresentationSlideRepository,
+    IPresentationVotingCodeRepository,
+    ISlideChoiceRepository,
+} from "src/core/repositories";
+import { BaseService } from "src/core/services";
+import { PRESENTATION_REPO_TOKEN, PRESENTATION_SLIDE_REPO_TOKEN, SLIDE_CHOICE_REPO_TOKEN } from "../repositories";
+import { PRESENTATION_VOTING_CODE_REPO_TOKEN } from "../repositories/presentation-voting-code.repository";
+
+export const PRESENTATION_SERVICE_TOKEN = Symbol("PresentationService");
+
+@Injectable()
+export class PresentationService extends BaseService<Presentation> {
+    constructor(
+        @Inject(PRESENTATION_REPO_TOKEN) private readonly _presentationRepository: IPresentationRepository,
+        @Inject(PRESENTATION_SLIDE_REPO_TOKEN)
+        private readonly _presentationSlideRepository: IPresentationSlideRepository,
+        @Inject(PRESENTATION_VOTING_CODE_REPO_TOKEN)
+        private readonly _presentationVotingCodeRepo: IPresentationVotingCodeRepository,
+        @Inject(SLIDE_CHOICE_REPO_TOKEN)
+        private readonly _slideChoiceRepo: ISlideChoiceRepository,
+    ) {
+        super(_presentationRepository);
+    }
+
+    async createPresentationWithDefaultSlideAsync(data: {
+        presentationName: string;
+        userId: string;
+        userDisplayName: string;
+    }) {
+        // generate default presentation pace value
+        const defaultPace = PresentationGenerator.generatePresentationPace();
+
+        // create presentation
+        const createdPresentation = await this.saveRecordAsync({
+            name: data.presentationName,
+            ownerIdentifier: data.userId,
+            ownerDisplayName: data.userDisplayName,
+            pace: defaultPace,
+            totalSlides: 0,
+        });
+
+        Logger.debug(JSON.stringify(createdPresentation), this.constructor.name);
+
+        // generate presentation voting code
+        // ! Refactor later: add mechanism to handle duplicated code
+        const code = PresentationGenerator.generateVotingCode(8);
+        await this._presentationVotingCodeRepo.saveRecordAsync({
+            code,
+            presentationIdentifier: createdPresentation.identifier,
+            isValid: true,
+            expiresAt: moment().add(2, "days").toDate(),
+        });
+
+        // create default slide
+        const slide = await this._presentationSlideRepository.saveRecordAsync({
+            presentationId: createdPresentation.id,
+            presentationIdentifier: createdPresentation.identifier,
+            question: "Default question",
+            slideType: "multiple_choice",
+            position: 0,
+        });
+
+        Logger.debug(JSON.stringify(slide), this.constructor.name);
+
+        // update presentation to link the first slide information
+        // this is the first slide, it will be set to presented slide
+        await this._presentationRepository.updateRecordByIdAsync(createdPresentation.id, {
+            totalSlides: 1,
+            pace: { ...defaultPace, active_slide_id: slide.id },
+        });
+
+        // create default slide choices: 1 option
+        const optionList = PresentationGenerator.generateMultipleChoiceOptions(1, slide.id);
+
+        await this._slideChoiceRepo.saveManyRecordAsync(optionList);
+
+        return createdPresentation.identifier;
+    }
+}
