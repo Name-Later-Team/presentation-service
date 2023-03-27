@@ -83,4 +83,17 @@ export class PresentationService extends BaseService<Presentation> {
 
         return createdPresentation.identifier;
     }
+
+    async findAllPresentationsByUserAsync(userId: string, pagination: { page: number; limit: number }) {
+        const { page, limit } = pagination;
+        const offset = limit * (page - 1);
+
+        const count = await this._presentationRepository.countByUserId(userId);
+        const presentations = await this._presentationRepository.findAllByUserId(userId, { offset, limit });
+
+        return {
+            items: presentations,
+            pagination: { count, page, limit },
+        };
+    }
 }

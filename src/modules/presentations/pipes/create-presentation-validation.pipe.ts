@@ -13,7 +13,7 @@ const createPresentationValidationSchema = Joi.object<CreatePresentationDto>({
 }).options({ allowUnknown: true, stripUnknown: true });
 
 @Injectable()
-export class CreatePresentationValidationPipe implements PipeTransform<CreatePresentationDto, any> {
+export class CreatePresentationValidationPipe implements PipeTransform<any, CreatePresentationDto> {
     transform(body: any, metadata: ArgumentMetadata): CreatePresentationDto {
         const result = createPresentationValidationSchema.validate(body, { convert: true });
         if (result.error) {
