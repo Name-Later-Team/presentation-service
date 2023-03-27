@@ -36,6 +36,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
         switch (exception.name) {
             case "RequestValidationException":
                 break;
+            case "NotFoundException":
+                status = 404;
+                responseError.code = status;
+                responseError.message = exception.message;
             default:
                 outMessage = exception;
                 break;

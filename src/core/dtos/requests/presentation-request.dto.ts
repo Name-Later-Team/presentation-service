@@ -3,3 +3,8 @@
 export interface CreatePresentationDto {
     name: string;
 }
+
+export interface FindAllPresentationsDto {
+    page: number;
+    limit: number;
+}

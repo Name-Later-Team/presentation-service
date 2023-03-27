@@ -20,7 +20,7 @@ function generateVotingCode(codeLength: number): string {
     return number < base ? `0${number}` : number.toString();
 }
 
-function generateMultipleChoiceOptions(optionCount: number, slideId): Partial<SlideChoice>[] {
+function generateMultipleChoiceOptions(optionCount: number, slideId: number): Partial<SlideChoice>[] {
     if (optionCount < 0) {
         throw new Error("Default option count must greater than 0");
     }
