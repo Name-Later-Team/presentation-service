@@ -1,5 +1,5 @@
-import { Presentation } from "../entities";
-import { IGenericRepository } from "./generic.repository";
+import { Presentation } from "src/core/entities";
+import { IGenericRepository } from "src/core/repositories";
 
 export interface IPresentationRepository extends IGenericRepository<Presentation> {
     countByUserId(userId: string): Promise<number>;

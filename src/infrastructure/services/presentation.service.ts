@@ -3,15 +3,15 @@ import { Injectable } from "@nestjs/common/decorators";
 import * as moment from "moment";
 import { PresentationGenerator } from "src/common/utils/generators";
 import { Presentation } from "src/core/entities";
+import { BaseService } from "src/core/services";
+import { PRESENTATION_REPO_TOKEN, PRESENTATION_SLIDE_REPO_TOKEN, SLIDE_CHOICE_REPO_TOKEN } from "../repositories";
+import { PRESENTATION_VOTING_CODE_REPO_TOKEN } from "../repositories/presentation-voting-code.repository";
 import {
     IPresentationRepository,
     IPresentationSlideRepository,
     IPresentationVotingCodeRepository,
     ISlideChoiceRepository,
-} from "src/core/repositories";
-import { BaseService } from "src/core/services";
-import { PRESENTATION_REPO_TOKEN, PRESENTATION_SLIDE_REPO_TOKEN, SLIDE_CHOICE_REPO_TOKEN } from "../repositories";
-import { PRESENTATION_VOTING_CODE_REPO_TOKEN } from "../repositories/presentation-voting-code.repository";
+} from "../repositories/interfaces";
 
 export const PRESENTATION_SERVICE_TOKEN = Symbol("PresentationService");
 

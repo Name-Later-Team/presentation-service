@@ -1,10 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { Presentation } from "src/core/entities";
-import { IPresentationRepository } from "src/core/repositories";
 import { DataSource } from "typeorm";
 import { PresentationSchema } from "../database/schemas";
 import { GenericRepository } from "./generic.repository";
+import { IPresentationRepository } from "./interfaces";
 
 export const PRESENTATION_REPO_TOKEN = Symbol("PresentationRepository");
 

@@ -1,9 +1,9 @@
 import { InjectDataSource } from "@nestjs/typeorm";
 import { PresentationSlide } from "src/core/entities";
-import { IPresentationSlideRepository } from "src/core/repositories";
 import { DataSource } from "typeorm";
 import { PresentationSlideSchema } from "../database/schemas";
 import { GenericRepository } from "./generic.repository";
+import { IPresentationSlideRepository } from "./interfaces";
 
 export const PRESENTATION_SLIDE_REPO_TOKEN = Symbol("PresentationRepository");
 

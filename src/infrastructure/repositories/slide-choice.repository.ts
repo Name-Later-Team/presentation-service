@@ -1,10 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { SlideChoice } from "src/core/entities";
-import { ISlideChoiceRepository } from "src/core/repositories";
 import { DataSource } from "typeorm";
 import { SlideChoiceSchema } from "../database/schemas";
 import { GenericRepository } from "./generic.repository";
+import { ISlideChoiceRepository } from "./interfaces";
 
 export const SLIDE_CHOICE_REPO_TOKEN = Symbol("SlideChoiceRepository");
 
@@ -20,8 +20,8 @@ export class SlideChoiceRepository extends GenericRepository<SlideChoice> implem
     async saveManyRecordAsync(entityList: Partial<SlideChoice>[]) {
         const queryBuilder = this._dataSource.createQueryBuilder();
 
-       const result = await queryBuilder.insert().into(SlideChoiceSchema).values(entityList).execute();
+        const result = await queryBuilder.insert().into(SlideChoiceSchema).values(entityList).execute();
 
-       return result;
+        return result;
     }
 }
