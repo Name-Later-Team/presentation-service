@@ -8,3 +8,9 @@ export interface FindAllPresentationsDto {
     page: number;
     limit: number;
 }
+
+export interface EditBasicInfoPresentationDto {
+    id: number;
+    closedForVoting: boolean;
+    name: string;
+}

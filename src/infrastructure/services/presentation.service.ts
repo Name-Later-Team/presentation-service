@@ -12,6 +12,7 @@ import {
     IPresentationVotingCodeRepository,
     ISlideChoiceRepository,
 } from "../repositories/interfaces";
+import { EditBasicInfoPresentationDto } from "src/core/dtos";
 
 export const PRESENTATION_SERVICE_TOKEN = Symbol("PresentationService");
 
@@ -95,5 +96,15 @@ export class PresentationService extends BaseService<Presentation> {
             items: presentations,
             pagination: { count, page, limit },
         };
+    }
+
+    async editBasicInfoPresentationeAsync(editInfo: EditBasicInfoPresentationDto) {
+        await this._presentationRepository.updateRecordByIdAsync(editInfo.id, {
+            name: editInfo.name,
+            closedForVoting: editInfo.closedForVoting,
+        });
+
+        const editedPresentation = await this._presentationRepository.getRecordByIdAsync(editInfo.id);
+        return editedPresentation;
     }
 }
