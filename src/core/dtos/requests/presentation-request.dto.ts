@@ -8,3 +8,7 @@ export interface FindAllPresentationsDto {
     page: number;
     limit: number;
 }
+
+export interface FindOnePresentationDto {
+    identifier: number | string;
+}

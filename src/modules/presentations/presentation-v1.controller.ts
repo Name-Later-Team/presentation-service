@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Inject, Post, Query, Req } from "@nestjs/common";
+import { Body, Controller, Get, Inject, Post, Query, Req, Param } from "@nestjs/common";
 import { Request } from "express";
-import { CreatePresentationDto, FindAllPresentationsDto } from "src/core/dtos";
+import { CreatePresentationDto, FindAllPresentationsDto, FindOnePresentationDto } from "src/core/dtos";
 import { CreatedResponse, DataResponse } from "src/core/response";
 import { PresentationService, PRESENTATION_SERVICE_TOKEN } from "src/infrastructure/services";
 import { CreatePresentationValidationPipe, FindAllPresentationsValidationPipe } from "./pipes";
+import { FindOnePresentationValidationPipe } from "./pipes/find-one-presentastion-validation.pipe";
 
 @Controller("v1/presentations")
 export class PresentationControllerV1 {
@@ -33,6 +34,18 @@ export class PresentationControllerV1 {
         const options = { page: query.page, limit: query.limit };
 
         const result = await this._presentationService.findAllPresentationsByUserAsync(userId, options);
+        return new DataResponse(result);
+    }
+
+    @Get("/:identifier")
+    async findOnePresentationAsync(
+        @Req() request: Request,
+        @Param(new FindOnePresentationValidationPipe()) params: FindOnePresentationDto,
+    ) {
+        const userId = request.userinfo.identifier;
+        const presentationIdentifier = params.identifier;
+        const result = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier, true);
+
         return new DataResponse(result);
     }
 }
