@@ -4,10 +4,6 @@ import { RequestValidationException } from "src/common/exceptions";
 import { EditBasicInfoPresentationDto } from "src/core/dtos";
 
 const editBasicInfoPresentationValidationSchema = Joi.object<EditBasicInfoPresentationDto>({
-    id: Joi.number().required().messages({
-        "any.required": "ID bài trình bày không được bỏ trống",
-        "number.base": "ID bài trình bày phải là số",
-    }),
     name: Joi.string().required().trim().max(100).messages({
         "any.required": "Tên bài trình bày không được bỏ trống",
         "string.base": "Tên bài trình bày phải là chuỗi",
@@ -15,12 +11,12 @@ const editBasicInfoPresentationValidationSchema = Joi.object<EditBasicInfoPresen
         "string.max": "Tên bài trình bày không được quá 100 ký tự",
     }),
     closedForVoting: Joi.boolean().messages({
-        "boolean.base": "Closed for voting bài trình bày phải là boolean",
+        "boolean.base": "Cho phép bầu chọn phải là boolean",
     }),
 }).options({ allowUnknown: true, stripUnknown: true });
 
 @Injectable()
-export class editBasicInfoPresentationValidationPipe implements PipeTransform<any, EditBasicInfoPresentationDto> {
+export class EditBasicInfoPresentationValidationPipe implements PipeTransform<any, EditBasicInfoPresentationDto> {
     transform(body: any, metadata: ArgumentMetadata): EditBasicInfoPresentationDto {
         const result = editBasicInfoPresentationValidationSchema.validate(body, { convert: true });
         if (result.error) {

@@ -6,12 +6,14 @@ import {
     FindAllPresentationsDto,
     FindOnePresentationDto,
 } from "src/core/dtos";
-import { CreatedResponse, DataResponse } from "src/core/response";
+import { CreatedResponse, DataResponse, UpdateResponse } from "src/core/response";
 import { PresentationService, PRESENTATION_SERVICE_TOKEN } from "src/infrastructure/services";
-import { CreatePresentationValidationPipe, FindAllPresentationsValidationPipe } from "./pipes";
+import {
+    CreatePresentationValidationPipe,
+    EditBasicInfoPresentationValidationPipe,
+    FindAllPresentationsValidationPipe,
+} from "./pipes";
 import { FindOnePresentationValidationPipe } from "./pipes/find-one-presentastion-validation.pipe";
-import { editBasicInfoPresentationValidationPipe } from "./pipes/edit-basic-info-presentaion-validation.pipe";
-import { EditBasicInfoPresentationSuccessDto } from "src/core/dtos/responses/presentation-respond.dto";
 
 @Controller("v1/presentations")
 export class PresentationControllerV1 {
@@ -56,17 +58,21 @@ export class PresentationControllerV1 {
         return new DataResponse(result);
     }
 
-    @Put("/basicinfo")
+    @Put("/:identifier")
     async editBasicInfoPresentationAsync(
         @Req() request: Request,
-        @Body(new editBasicInfoPresentationValidationPipe())
+        @Param(new FindOnePresentationValidationPipe()) params: FindOnePresentationDto,
+        @Body(new EditBasicInfoPresentationValidationPipe())
         editBasicInfoPresentationDto: EditBasicInfoPresentationDto,
     ) {
-        const result = await this._presentationService.editBasicInfoPresentationeAsync(editBasicInfoPresentationDto);
-        const mapResult: EditBasicInfoPresentationSuccessDto = {
-            name: result.name,
-            closedForVoting: result.closedForVoting,
-        };
-        return new DataResponse(mapResult);
+        const presentationId = params.identifier;
+        const userId = request.userinfo.identifier;
+
+        await this._presentationService.editBasicInfoPresentationeAsync(
+            userId,
+            presentationId,
+            editBasicInfoPresentationDto,
+        );
+        return new UpdateResponse();
     }
 }

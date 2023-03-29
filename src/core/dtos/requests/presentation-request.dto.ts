@@ -14,7 +14,6 @@ export interface FindOnePresentationDto {
 }
 
 export interface EditBasicInfoPresentationDto {
-    id: number;
     closedForVoting: boolean;
     name: string;
 }

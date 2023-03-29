@@ -136,13 +136,25 @@ export class PresentationService extends BaseService<Presentation> {
         return { ...presentation, slides };
     }
 
-    async editBasicInfoPresentationeAsync(editInfo: EditBasicInfoPresentationDto) {
-        await this._presentationRepository.updateRecordByIdAsync(editInfo.id, {
+    async editBasicInfoPresentationeAsync(
+        userId: string,
+        presentationIdentifier: number | string,
+        editInfo: EditBasicInfoPresentationDto,
+    ) {
+        const presentationIdentifierField = typeof presentationIdentifier === "number" ? "id" : "identifier";
+        const presentation = await this._presentationRepository.findOne({
+            where: {
+                [presentationIdentifierField]: presentationIdentifier,
+                ownerIdentifier: userId,
+            },
+        });
+
+        if (presentation === null) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTATION_NOT_FOUND, "Presentation not found");
+        }
+        await this._presentationRepository.updateRecordByIdAsync(presentation.id, {
             name: editInfo.name,
             closedForVoting: editInfo.closedForVoting,
         });
-
-        const editedPresentation = await this._presentationRepository.getRecordByIdAsync(editInfo.id);
-        return editedPresentation;
     }
 }
