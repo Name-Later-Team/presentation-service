@@ -1,9 +1,18 @@
-import { Body, Controller, Get, Inject, Post, Query, Req, Param } from "@nestjs/common";
+import { Body, Controller, Get, Inject, Post, Put, Query, Req, Param } from "@nestjs/common";
 import { Request } from "express";
-import { CreatePresentationDto, FindAllPresentationsDto, FindOnePresentationDto } from "src/core/dtos";
-import { CreatedResponse, DataResponse } from "src/core/response";
+import {
+    CreatePresentationDto,
+    EditBasicInfoPresentationDto,
+    FindAllPresentationsDto,
+    FindOnePresentationDto,
+} from "src/core/dtos";
+import { CreatedResponse, DataResponse, UpdateResponse } from "src/core/response";
 import { PresentationService, PRESENTATION_SERVICE_TOKEN } from "src/infrastructure/services";
-import { CreatePresentationValidationPipe, FindAllPresentationsValidationPipe } from "./pipes";
+import {
+    CreatePresentationValidationPipe,
+    EditBasicInfoPresentationValidationPipe,
+    FindAllPresentationsValidationPipe,
+} from "./pipes";
 import { FindOnePresentationValidationPipe } from "./pipes/find-one-presentastion-validation.pipe";
 
 @Controller("v1/presentations")
@@ -47,5 +56,23 @@ export class PresentationControllerV1 {
         const result = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier, true);
 
         return new DataResponse(result);
+    }
+
+    @Put("/:identifier")
+    async editBasicInfoPresentationAsync(
+        @Req() request: Request,
+        @Param(new FindOnePresentationValidationPipe()) params: FindOnePresentationDto,
+        @Body(new EditBasicInfoPresentationValidationPipe())
+        editBasicInfoPresentationDto: EditBasicInfoPresentationDto,
+    ) {
+        const presentationId = params.identifier;
+        const userId = request.userinfo.identifier;
+
+        await this._presentationService.editBasicInfoPresentationeAsync(
+            userId,
+            presentationId,
+            editBasicInfoPresentationDto,
+        );
+        return new UpdateResponse();
     }
 }

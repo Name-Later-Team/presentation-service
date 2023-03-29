@@ -12,3 +12,8 @@ export interface FindAllPresentationsDto {
 export interface FindOnePresentationDto {
     identifier: number | string;
 }
+
+export interface EditBasicInfoPresentationDto {
+    closedForVoting: boolean;
+    name: string;
+}
