@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { Presentation } from "src/core/entities";
-import { DataSource } from "typeorm";
+import { DataSource, FindOneOptions } from "typeorm";
 import { PresentationSchema } from "../database/schemas";
 import { GenericRepository } from "./generic.repository";
 import { IPresentationRepository } from "./interfaces";
@@ -28,5 +28,9 @@ export class PresentationRepository extends GenericRepository<Presentation> impl
             skip,
             take,
         });
+    }
+
+    findOne(options: FindOneOptions<Presentation>): Promise<Presentation | null> {
+        return this._repository.findOne(options);
     }
 }

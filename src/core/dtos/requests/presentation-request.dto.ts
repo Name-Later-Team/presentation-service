@@ -9,6 +9,10 @@ export interface FindAllPresentationsDto {
     limit: number;
 }
 
+export interface FindOnePresentationDto {
+    identifier: number | string;
+}
+
 export interface EditBasicInfoPresentationDto {
     id: number;
     closedForVoting: boolean;

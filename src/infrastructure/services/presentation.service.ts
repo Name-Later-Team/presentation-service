@@ -1,11 +1,18 @@
 import { Inject, Logger } from "@nestjs/common";
 import { Injectable } from "@nestjs/common/decorators";
+import * as _ from "lodash";
 import * as moment from "moment";
+import { RESPONSE_CODE } from "src/common/constants";
+import { SimpleBadRequestException } from "src/common/exceptions";
 import { PresentationGenerator } from "src/common/utils/generators";
 import { Presentation } from "src/core/entities";
 import { BaseService } from "src/core/services";
-import { PRESENTATION_REPO_TOKEN, PRESENTATION_SLIDE_REPO_TOKEN, SLIDE_CHOICE_REPO_TOKEN } from "../repositories";
-import { PRESENTATION_VOTING_CODE_REPO_TOKEN } from "../repositories/presentation-voting-code.repository";
+import {
+    PRESENTATION_REPO_TOKEN,
+    PRESENTATION_SLIDE_REPO_TOKEN,
+    PRESENTATION_VOTING_CODE_REPO_TOKEN,
+    SLIDE_CHOICE_REPO_TOKEN,
+} from "../repositories";
 import {
     IPresentationRepository,
     IPresentationSlideRepository,
@@ -96,6 +103,37 @@ export class PresentationService extends BaseService<Presentation> {
             items: presentations,
             pagination: { count, page, limit },
         };
+    }
+
+    async findOnePresentationAsync(userId: string, presentationIdentifier: number | string, isIncludeSlides = false) {
+        const presentationIdentifierField = typeof presentationIdentifier === "number" ? "id" : "identifier";
+        const presentation = await this._presentationRepository.findOne({
+            where: {
+                [presentationIdentifierField]: presentationIdentifier,
+                ownerIdentifier: userId,
+            },
+        });
+
+        if (presentation === null) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTATION_NOT_FOUND, "Presentation not found");
+        }
+
+        let slides: { id: number; slideType: string; position: number }[] | undefined = undefined;
+        if (isIncludeSlides) {
+            const fkField = `presentation${_.capitalize(presentationIdentifierField)}`;
+            slides = await this._presentationSlideRepository.findMany({
+                select: ["id", "slideType", "position"],
+                where: {
+                    [fkField]: presentationIdentifier,
+                },
+            });
+
+            if (slides.length === 0) {
+                throw new Error("The presentation does not have any slides");
+            }
+        }
+
+        return { ...presentation, slides };
     }
 
     async editBasicInfoPresentationeAsync(editInfo: EditBasicInfoPresentationDto) {

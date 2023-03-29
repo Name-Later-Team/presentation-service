@@ -1,9 +1,15 @@
-import { Body, Controller, Get, Inject, Post, Put, Query, Req } from "@nestjs/common";
+import { Body, Controller, Get, Inject, Post, Put, Query, Req, Param } from "@nestjs/common";
 import { Request } from "express";
-import { CreatePresentationDto, EditBasicInfoPresentationDto, FindAllPresentationsDto } from "src/core/dtos";
+import {
+    CreatePresentationDto,
+    EditBasicInfoPresentationDto,
+    FindAllPresentationsDto,
+    FindOnePresentationDto,
+} from "src/core/dtos";
 import { CreatedResponse, DataResponse } from "src/core/response";
 import { PresentationService, PRESENTATION_SERVICE_TOKEN } from "src/infrastructure/services";
 import { CreatePresentationValidationPipe, FindAllPresentationsValidationPipe } from "./pipes";
+import { FindOnePresentationValidationPipe } from "./pipes/find-one-presentastion-validation.pipe";
 import { editBasicInfoPresentationValidationPipe } from "./pipes/edit-basic-info-presentaion-validation.pipe";
 import { EditBasicInfoPresentationSuccessDto } from "src/core/dtos/responses/presentation-respond.dto";
 
@@ -35,6 +41,18 @@ export class PresentationControllerV1 {
         const options = { page: query.page, limit: query.limit };
 
         const result = await this._presentationService.findAllPresentationsByUserAsync(userId, options);
+        return new DataResponse(result);
+    }
+
+    @Get("/:identifier")
+    async findOnePresentationAsync(
+        @Req() request: Request,
+        @Param(new FindOnePresentationValidationPipe()) params: FindOnePresentationDto,
+    ) {
+        const userId = request.userinfo.identifier;
+        const presentationIdentifier = params.identifier;
+        const result = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier, true);
+
         return new DataResponse(result);
     }
 
