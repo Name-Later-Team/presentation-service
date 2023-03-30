@@ -65,5 +65,7 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
             const optionList = PresentationGenerator.generateMultipleChoiceOptions(1, createdSlide.id);
             await this._slideChoiceRepository.saveManyRecordAsync(optionList);
         }
+
+        return createdSlide;
     }
 }
