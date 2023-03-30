@@ -123,9 +123,8 @@ export class PresentationService extends BaseService<Presentation> {
             const fkField = `presentation${_.capitalize(presentationIdentifierField)}`;
             slides = await this._presentationSlideRepository.findMany({
                 select: ["id", "slideType", "position"],
-                where: {
-                    [fkField]: presentationIdentifier,
-                },
+                where: { [fkField]: presentationIdentifier },
+                order: { position: "ASC" },
             });
 
             if (slides.length === 0) {
