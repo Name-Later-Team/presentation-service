@@ -7,7 +7,7 @@ export interface CreatePresentationDto {
 export interface FindAllPresentationsDto {
     page: number;
     limit: number;
-    order?: Record<"id" | "createdAt" | "updatedAt" | "name" | "totalSlides", "ASC" | "DESC" | undefined>;
+    order?: Record<"createdAt" | "updatedAt" | "name" | "totalSlides", "ASC" | "DESC" | undefined>;
 }
 
 export interface FindOnePresentationDto {

@@ -22,7 +22,7 @@ export abstract class GenericRepository<T extends ObjectLiteral> implements IGen
     }
 
     updateRecordByIdAsync(id: number, entity: Partial<T>) {
-        return this._repository.update(id, entity as any);
+        return this._repository.update(id, entity);
     }
 
     deleteRecordByIdAsync(id: number) {

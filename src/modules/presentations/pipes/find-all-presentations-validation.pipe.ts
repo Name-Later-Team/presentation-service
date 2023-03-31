@@ -37,7 +37,6 @@ const findAllPresentationsValidationSchema = Joi.object<FindAllPresentationsDto>
         }),
 
     order: STRINGIFIED_JSON_OBJECT_SCHEMA.stringifiedObject({
-        id: ORDERING_SPEC_SCHEMA,
         createdAt: ORDERING_SPEC_SCHEMA,
         updatedAt: ORDERING_SPEC_SCHEMA,
         name: ORDERING_SPEC_SCHEMA,

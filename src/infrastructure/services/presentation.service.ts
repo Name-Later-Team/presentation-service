@@ -102,8 +102,8 @@ export class PresentationService extends BaseService<Presentation> {
         const limit = options.limit ?? PAGINATION.DEFAULT_PAGE_SIZE;
         const offset = limit * (page - 1);
 
-        const count = await this._presentationRepository.countBy({ ownerIdentifier: userId });
-        const presentations = await this._presentationRepository.findMany({
+        const count = await this._presentationRepository.countPresentations({ ownerIdentifier: userId });
+        const presentations = await this._presentationRepository.findManyPresentations({
             order,
             skip: offset,
             take: limit,
@@ -118,7 +118,7 @@ export class PresentationService extends BaseService<Presentation> {
 
     async findOnePresentationAsync(userId: string, presentationIdentifier: number | string, isIncludeSlides = false) {
         const presentationIdentifierField = typeof presentationIdentifier === "number" ? "id" : "identifier";
-        const presentation = await this._presentationRepository.findOne({
+        const presentation = await this._presentationRepository.findOnePresentation({
             where: {
                 [presentationIdentifierField]: presentationIdentifier,
                 ownerIdentifier: userId,
@@ -152,7 +152,7 @@ export class PresentationService extends BaseService<Presentation> {
         editInfo: EditBasicInfoPresentationDto,
     ) {
         const presentationIdentifierField = typeof presentationIdentifier === "number" ? "id" : "identifier";
-        const presentation = await this._presentationRepository.findOne({
+        const presentation = await this._presentationRepository.findOnePresentation({
             where: {
                 [presentationIdentifierField]: presentationIdentifier,
                 ownerIdentifier: userId,

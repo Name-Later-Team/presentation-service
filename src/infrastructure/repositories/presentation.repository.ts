@@ -17,15 +17,15 @@ export class PresentationRepository extends GenericRepository<Presentation> impl
         super(_dataSource.getRepository(PresentationSchema));
     }
 
-    countBy(where: FindOptionsWhere<Presentation> | FindOptionsWhere<Presentation>[]) {
+    countPresentations(where: FindOptionsWhere<Presentation> | FindOptionsWhere<Presentation>[]) {
         return this._repository.countBy(where);
     }
 
-    findMany(options: FindManyOptions<Presentation>) {
+    findManyPresentations(options: FindManyOptions<Presentation>) {
         return this._repository.find(options);
     }
 
-    findOne(options: FindOneOptions<Presentation>) {
+    findOnePresentation(options: FindOneOptions<Presentation>) {
         return this._repository.findOne(options);
     }
 }
