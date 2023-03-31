@@ -40,7 +40,11 @@ export class PresentationControllerV1 {
         @Query(new FindAllPresentationsValidationPipe()) query: FindAllPresentationsDto,
     ) {
         const userId = request.userinfo.identifier;
-        const options = { page: query.page, limit: query.limit };
+        const options = {
+            page: query.page,
+            limit: query.limit,
+            order: query.order,
+        };
 
         const result = await this._presentationService.findAllPresentationsByUserAsync(userId, options);
         return new DataResponse(result);

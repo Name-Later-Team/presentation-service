@@ -2,7 +2,7 @@ import { Inject, Logger } from "@nestjs/common";
 import { Injectable } from "@nestjs/common/decorators";
 import * as _ from "lodash";
 import * as moment from "moment";
-import { RESPONSE_CODE } from "src/common/constants";
+import { PAGINATION, RESPONSE_CODE } from "src/common/constants";
 import { SimpleBadRequestException } from "src/common/exceptions";
 import { PresentationGenerator } from "src/common/utils/generators";
 import { Presentation } from "src/core/entities";
@@ -20,6 +20,7 @@ import {
     ISlideChoiceRepository,
 } from "../repositories/interfaces";
 import { EditBasicInfoPresentationDto } from "src/core/dtos";
+import { FindOptionsOrder } from "typeorm";
 
 export const PRESENTATION_SERVICE_TOKEN = Symbol("PresentationService");
 
@@ -92,12 +93,22 @@ export class PresentationService extends BaseService<Presentation> {
         return createdPresentation.identifier;
     }
 
-    async findAllPresentationsByUserAsync(userId: string, pagination: { page: number; limit: number }) {
-        const { page, limit } = pagination;
+    async findAllPresentationsByUserAsync(
+        userId: string,
+        options: { page?: number; limit?: number; order?: FindOptionsOrder<Presentation> },
+    ) {
+        const order = options.order ?? { createdAt: "DESC" };
+        const page = options.page ?? PAGINATION.DEFAULT_PAGE;
+        const limit = options.limit ?? PAGINATION.DEFAULT_PAGE_SIZE;
         const offset = limit * (page - 1);
 
-        const count = await this._presentationRepository.countByUserId(userId);
-        const presentations = await this._presentationRepository.findAllByUserId(userId, { offset, limit });
+        const count = await this._presentationRepository.countPresentations({ ownerIdentifier: userId });
+        const presentations = await this._presentationRepository.findManyPresentations({
+            order,
+            skip: offset,
+            take: limit,
+            where: { ownerIdentifier: userId },
+        });
 
         return {
             items: presentations,
@@ -107,7 +118,7 @@ export class PresentationService extends BaseService<Presentation> {
 
     async findOnePresentationAsync(userId: string, presentationIdentifier: number | string, isIncludeSlides = false) {
         const presentationIdentifierField = typeof presentationIdentifier === "number" ? "id" : "identifier";
-        const presentation = await this._presentationRepository.findOne({
+        const presentation = await this._presentationRepository.findOnePresentation({
             where: {
                 [presentationIdentifierField]: presentationIdentifier,
                 ownerIdentifier: userId,
@@ -141,7 +152,7 @@ export class PresentationService extends BaseService<Presentation> {
         editInfo: EditBasicInfoPresentationDto,
     ) {
         const presentationIdentifierField = typeof presentationIdentifier === "number" ? "id" : "identifier";
-        const presentation = await this._presentationRepository.findOne({
+        const presentation = await this._presentationRepository.findOnePresentation({
             where: {
                 [presentationIdentifierField]: presentationIdentifier,
                 ownerIdentifier: userId,

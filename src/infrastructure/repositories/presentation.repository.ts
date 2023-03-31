@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { Presentation } from "src/core/entities";
-import { DataSource, FindOneOptions } from "typeorm";
+import { DataSource, FindManyOptions, FindOneOptions, FindOptionsWhere } from "typeorm";
 import { PresentationSchema } from "../database/schemas";
 import { GenericRepository } from "./generic.repository";
 import { IPresentationRepository } from "./interfaces";
@@ -17,20 +17,15 @@ export class PresentationRepository extends GenericRepository<Presentation> impl
         super(_dataSource.getRepository(PresentationSchema));
     }
 
-    async countByUserId(userId: string) {
-        return this._repository.countBy({ ownerIdentifier: userId });
+    countPresentations(where: FindOptionsWhere<Presentation> | FindOptionsWhere<Presentation>[]) {
+        return this._repository.countBy(where);
     }
 
-    async findAllByUserId(userId: string, options: { offset?: number; limit?: number } = {}) {
-        const { offset: skip, limit: take } = options;
-        return this._repository.find({
-            where: { ownerIdentifier: userId },
-            skip,
-            take,
-        });
+    findManyPresentations(options: FindManyOptions<Presentation>) {
+        return this._repository.find(options);
     }
 
-    findOne(options: FindOneOptions<Presentation>): Promise<Presentation | null> {
+    findOnePresentation(options: FindOneOptions<Presentation>) {
         return this._repository.findOne(options);
     }
 }

@@ -1,9 +1,9 @@
 import { Presentation } from "src/core/entities";
 import { IGenericRepository } from "src/core/repositories";
-import { FindOneOptions } from "typeorm";
+import { FindManyOptions, FindOneOptions, FindOptionsWhere } from "typeorm";
 
 export interface IPresentationRepository extends IGenericRepository<Presentation> {
-    countByUserId(userId: string): Promise<number>;
-    findAllByUserId(userId: string, options: { offset?: number; limit?: number }): Promise<Presentation[]>;
-    findOne(options: FindOneOptions<Presentation>): Promise<Presentation | null>;
+    countPresentations(where: FindOptionsWhere<Presentation> | FindOptionsWhere<Presentation>[]): Promise<number>;
+    findManyPresentations(options: FindManyOptions<Presentation>): Promise<Presentation[]>;
+    findOnePresentation(options: FindOneOptions<Presentation>): Promise<Presentation | null>;
 }
