@@ -14,6 +14,9 @@ declare global {
                 avatar: string;
                 email: string;
             } & Record<string, any>;
+
+            // additional field for add raw body as text
+            text: string;
         }
     }
 }
