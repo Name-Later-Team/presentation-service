@@ -40,6 +40,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
                 status = 404;
                 responseError.code = status;
                 responseError.message = exception.message;
+                break;
+            case "UnauthorizedException":
+                outMessage = exception.toString();
+                break;
+            case "RsaException":
+                status = 401;
+                responseError.code = status;
+                responseError.message = "Unauthorized";
+                outMessage = `RsaException - ${exception.message}`;
+                break;
             default:
                 outMessage = exception;
                 break;

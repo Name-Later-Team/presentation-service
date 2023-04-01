@@ -1,5 +1,6 @@
 import { Logger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import * as bodyParser from "body-parser";
 import { AppModule } from "./app.module";
 import { AllExceptionsFilter } from "./common/filters/all-exception.filter";
 import { LoggingInterceptor, ResponseMappingInterceptor } from "./common/interceptors";
@@ -10,6 +11,8 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule, {
         logger: WinstonLogger,
     });
+
+    app.use(bodyParser.raw({ type: ["application/json+text"] }));
 
     app.enableCors({
         origin: CORS_CONFIG.origin,

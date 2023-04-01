@@ -13,7 +13,7 @@ const formatFunction = winston.format.printf(({ context, level, timestamp, ms, m
 
 	const outMessage = typeof message === "object" ? fastStringify.default(message) : message;
 
-	return `[${timestampString}] : [${level}] : [${context}] : ${outMessage} ${ms}\n`;
+	return `[${timestampString}] : [${level}] : [${context}] : ${outMessage} ${ms}`;
 });
 
 const format = winston.format.combine(winston.format.timestamp(), winston.format.ms(), formatFunction);
