@@ -131,11 +131,18 @@ export class PresentationService extends BaseService<Presentation> {
 
         let slides: { id: number; slideType: string; position: number }[] | undefined = undefined;
         if (isIncludeSlides) {
-            const fkField = `presentation${_.capitalize(presentationIdentifierField)}`;
-            slides = await this._presentationSlideRepository.findMany({
-                select: ["id", "slideType", "position"],
-                where: { [fkField]: presentationIdentifier },
-                order: { position: "ASC" },
+            slides = await this._presentationSlideRepository.findManyPresentationSlidesAsync({
+                select: {
+                    id: true,
+                    slideType: true,
+                    position: true,
+                },
+                where: {
+                    presentationIdentifier: presentation.identifier,
+                },
+                order: {
+                    position: "ASC",
+                },
             });
 
             if (slides.length === 0) {
@@ -166,5 +173,19 @@ export class PresentationService extends BaseService<Presentation> {
             name: editInfo.name,
             closedForVoting: editInfo.closedForVoting,
         });
+    }
+
+    async existsByIdentifierAsync(userId: string, presentationIdentifier: string | number, isThrowError = false) {
+        const presentationIdentifierField = typeof presentationIdentifier === "number" ? "id" : "identifier";
+        const count = await this._presentationRepository.countPresentations({
+            [presentationIdentifierField]: presentationIdentifier,
+            ownerIdentifier: userId,
+        });
+
+        if (isThrowError && count !== 1) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTATION_NOT_FOUND);
+        }
+
+        return count === 1;
     }
 }

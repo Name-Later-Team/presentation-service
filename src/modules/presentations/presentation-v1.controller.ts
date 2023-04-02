@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Inject, Post, Put, Query, Req, Param } from "@nestjs/common";
+import { Body, Controller, Get, Inject, Param, Post, Put, Query, Req } from "@nestjs/common";
 import { Request } from "express";
+import * as _ from "lodash";
 import {
     CreatePresentationDto,
     EditBasicInfoPresentationDto,
@@ -7,7 +8,7 @@ import {
     FindOnePresentationDto,
 } from "src/core/dtos";
 import { CreatedResponse, DataResponse, UpdateResponse } from "src/core/response";
-import { PresentationService, PRESENTATION_SERVICE_TOKEN } from "src/infrastructure/services";
+import { PRESENTATION_SERVICE_TOKEN, PresentationService } from "src/infrastructure/services";
 import {
     CreatePresentationValidationPipe,
     EditBasicInfoPresentationValidationPipe,
@@ -47,7 +48,9 @@ export class PresentationControllerV1 {
         };
 
         const result = await this._presentationService.findAllPresentationsByUserAsync(userId, options);
-        return new DataResponse(result);
+        const presentationsWithoutId = result.items.map((presentation) => _.omit(presentation, "id"));
+
+        return new DataResponse({ ...result, items: presentationsWithoutId });
     }
 
     @Get("/:identifier")
@@ -59,7 +62,7 @@ export class PresentationControllerV1 {
         const presentationIdentifier = params.identifier;
         const result = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier, true);
 
-        return new DataResponse(result);
+        return new DataResponse(_.omit(result, "id"));
     }
 
     @Put("/:identifier")
