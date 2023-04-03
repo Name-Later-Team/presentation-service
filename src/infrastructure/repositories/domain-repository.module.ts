@@ -1,11 +1,12 @@
 import { Module } from "@nestjs/common";
-import { PresentationSlideRepository, PRESENTATION_SLIDE_REPO_TOKEN } from "./presentation-slide.repository";
+import { PRESENTATION_SLIDE_REPO_TOKEN, PresentationSlideRepository } from "./presentation-slide.repository";
 import {
-    PresentationVotingCodeRepository,
     PRESENTATION_VOTING_CODE_REPO_TOKEN,
+    PresentationVotingCodeRepository,
 } from "./presentation-voting-code.repository";
-import { PresentationRepository, PRESENTATION_REPO_TOKEN } from "./presentation.repository";
-import { SlideChoiceRepository, SLIDE_CHOICE_REPO_TOKEN } from "./slide-choice.repository";
+import { PRESENTATION_REPO_TOKEN, PresentationRepository } from "./presentation.repository";
+import { SLIDE_CHOICE_REPO_TOKEN, SlideChoiceRepository } from "./slide-choice.repository";
+import { SLIDE_VOTING_RESULT_REPO_TOKEN, SlideVotingResultRepository } from "./slide-voting-result.repository";
 
 @Module({
     providers: [
@@ -13,12 +14,14 @@ import { SlideChoiceRepository, SLIDE_CHOICE_REPO_TOKEN } from "./slide-choice.r
         { provide: PRESENTATION_SLIDE_REPO_TOKEN, useClass: PresentationSlideRepository },
         { provide: PRESENTATION_VOTING_CODE_REPO_TOKEN, useClass: PresentationVotingCodeRepository },
         { provide: SLIDE_CHOICE_REPO_TOKEN, useClass: SlideChoiceRepository },
+        { provide: SLIDE_VOTING_RESULT_REPO_TOKEN, useClass: SlideVotingResultRepository },
     ],
     exports: [
         { provide: PRESENTATION_REPO_TOKEN, useClass: PresentationRepository },
         { provide: PRESENTATION_SLIDE_REPO_TOKEN, useClass: PresentationSlideRepository },
         { provide: PRESENTATION_VOTING_CODE_REPO_TOKEN, useClass: PresentationVotingCodeRepository },
         { provide: SLIDE_CHOICE_REPO_TOKEN, useClass: SlideChoiceRepository },
+        { provide: SLIDE_VOTING_RESULT_REPO_TOKEN, useClass: SlideChoiceRepository },
     ],
 })
 export class DomainRepositoryModule {}

@@ -28,4 +28,8 @@ export abstract class GenericRepository<T extends ObjectLiteral> implements IGen
     deleteRecordByIdAsync(id: number) {
         return this._repository.delete(id);
     }
+
+    executeRawQueryAsync(query: string, parameters?: any[]) {
+        return this._repository.query(query, parameters);
+    }
 }

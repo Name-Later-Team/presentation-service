@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { SlideChoice } from "src/core/entities";
-import { DataSource } from "typeorm";
+import { DataSource, FindManyOptions } from "typeorm";
 import { SlideChoiceSchema } from "../database/schemas";
 import { GenericRepository } from "./generic.repository";
 import { ISlideChoiceRepository } from "./interfaces";
@@ -23,5 +23,9 @@ export class SlideChoiceRepository extends GenericRepository<SlideChoice> implem
         const result = await queryBuilder.insert().into(SlideChoiceSchema).values(entityList).execute();
 
         return result;
+    }
+
+    findManySlideChoicesAsync(options: FindManyOptions<SlideChoice>) {
+        return this._repository.find(options);
     }
 }

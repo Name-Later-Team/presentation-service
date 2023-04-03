@@ -11,4 +11,6 @@ export interface IGenericRepository<T> {
     updateRecordByIdAsync(id: number, entity: Partial<T>): Promise<any>;
 
     deleteRecordByIdAsync(id: number): Promise<any>;
+
+    executeRawQueryAsync(query: string, parameters?: any[]): Promise<any>;
 }
