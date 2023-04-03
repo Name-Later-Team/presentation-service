@@ -13,8 +13,8 @@ import {
     CreatePresentationValidationPipe,
     EditBasicInfoPresentationValidationPipe,
     FindAllPresentationsValidationPipe,
+    FindOnePresentationValidationPipe,
 } from "./pipes";
-import { FindOnePresentationValidationPipe } from "./pipes/find-one-presentastion-validation.pipe";
 
 @Controller("v1/presentations")
 export class PresentationControllerV1 {
