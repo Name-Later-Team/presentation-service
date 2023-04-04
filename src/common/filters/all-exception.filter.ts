@@ -35,6 +35,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         // handle error detaisl base on its name
         switch (exception.name) {
             case "RequestValidationException":
+            case "SimpleBadRequestException":
                 break;
             case "NotFoundException":
                 status = 404;

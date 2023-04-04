@@ -17,4 +17,5 @@ export class PresentationSlide extends IdentifierTimeTrackingEntityPart {
     hideInstructionBar: boolean;
     extrasConfig: string;
     position: number;
+    textSize: number;
 }

@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Inject, Param, Post, Put, Query, Req } from "@nestjs/common";
 import { Request } from "express";
 import * as _ from "lodash";
+import { RESPONSE_CODE } from "src/common/constants";
+import { SimpleBadRequestException } from "src/common/exceptions";
 import {
     CreatePresentationDto,
     EditBasicInfoPresentationDto,
@@ -81,5 +83,39 @@ export class PresentationControllerV1 {
             editBasicInfoPresentationDto,
         );
         return new UpdateResponse();
+    }
+
+    @Get("/:identifier/votingCodes")
+    async findOnePresentationVotingCodeAsync(
+        @Req() request: Request,
+        @Param(new FindOnePresentationValidationPipe()) params: FindOnePresentationDto,
+    ) {
+        const userId = request.userinfo.identifier;
+        const presentationIdentifier = params.identifier;
+
+        const presentation = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier);
+        const votingCode = await this._presentationService.findOnePresentationVotingCodeAsync(presentation.identifier);
+
+        if (votingCode === null) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.VOTING_CODE_NOT_FOUND);
+        }
+
+        const result = _.omit(votingCode, ["id", "presentationIdentifier"]);
+        return new DataResponse(result);
+    }
+
+    @Post("/:identifier/votingCodes")
+    async addOrFindPresentationVotingCodeAsync(
+        @Req() request: Request,
+        @Param(new FindOnePresentationValidationPipe()) params: FindOnePresentationDto,
+    ) {
+        const userId = request.userinfo.identifier;
+        const presentationIdentifier = params.identifier;
+
+        const presentation = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier);
+        const votingCode = await this._presentationService.addOrFindPresenationVotingCodeAsync(presentation.identifier);
+
+        const result = _.omit(votingCode, ["id", "presentationIdentifier"]);
+        return new DataResponse(result);
     }
 }

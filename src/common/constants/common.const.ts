@@ -14,3 +14,5 @@ export enum PRESENTATION_PACE_STATE {
     IDLE = "idle",
     PRESENTING = "presenting",
 }
+
+export const VOTING_CODE_GENERATION_RETRY_ATTEMPTS = 3;
