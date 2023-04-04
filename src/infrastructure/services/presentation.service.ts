@@ -1,6 +1,5 @@
 import { Inject, Logger } from "@nestjs/common";
 import { Injectable } from "@nestjs/common/decorators";
-import { isBefore } from "date-fns";
 import * as moment from "moment";
 import { PAGINATION, RESPONSE_CODE, VOTING_CODE_GENERATION_RETRY_ATTEMPTS } from "src/common/constants";
 import { SimpleBadRequestException } from "src/common/exceptions";
@@ -215,7 +214,8 @@ export class PresentationService extends BaseService<Presentation> {
             await this._presentationVotingCodeRepo.updateRecordByIdAsync(votingCode.id, { isValid: false });
         }
 
-        const newCode = await this._generateVotingCodeWithCheckingDuplicateAsync(8);
+        const codeLength = 8;
+        const newCode = await this._generateVotingCodeWithCheckingDuplicateAsync(codeLength);
         const createdCode = await this._presentationVotingCodeRepo.saveRecordAsync({
             code: newCode,
             presentationIdentifier,
