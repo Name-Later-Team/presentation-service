@@ -206,7 +206,7 @@ export class PresentationService extends BaseService<Presentation> {
         });
 
         // valid code
-        if (votingCode && votingCode.isValid && isBefore(new Date(), votingCode.expiresAt)) {
+        if (votingCode && votingCode.isValid && moment().isBefore(votingCode.expiresAt)) {
             return votingCode;
         }
 
