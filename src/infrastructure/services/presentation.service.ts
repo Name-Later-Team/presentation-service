@@ -1,12 +1,14 @@
 import { Inject, Logger } from "@nestjs/common";
 import { Injectable } from "@nestjs/common/decorators";
-import * as _ from "lodash";
+import { isBefore } from "date-fns";
 import * as moment from "moment";
-import { PAGINATION, RESPONSE_CODE } from "src/common/constants";
+import { PAGINATION, RESPONSE_CODE, VOTING_CODE_GENERATION_RETRY_ATTEMPTS } from "src/common/constants";
 import { SimpleBadRequestException } from "src/common/exceptions";
 import { PresentationGenerator } from "src/common/utils/generators";
+import { EditBasicInfoPresentationDto } from "src/core/dtos";
 import { Presentation } from "src/core/entities";
 import { BaseService } from "src/core/services";
+import { FindOptionsOrder, Raw } from "typeorm";
 import {
     PRESENTATION_REPO_TOKEN,
     PRESENTATION_SLIDE_REPO_TOKEN,
@@ -19,8 +21,6 @@ import {
     IPresentationVotingCodeRepository,
     ISlideChoiceRepository,
 } from "../repositories/interfaces";
-import { EditBasicInfoPresentationDto } from "src/core/dtos";
-import { FindOptionsOrder } from "typeorm";
 
 export const PRESENTATION_SERVICE_TOKEN = Symbol("PresentationService");
 
@@ -58,8 +58,7 @@ export class PresentationService extends BaseService<Presentation> {
         Logger.debug(JSON.stringify(createdPresentation), this.constructor.name);
 
         // generate presentation voting code
-        // ! Refactor later: add mechanism to handle duplicated code
-        const code = PresentationGenerator.generateVotingCode(8);
+        const code = await this._generateVotingCodeWithCheckingDuplicateAsync(8);
         await this._presentationVotingCodeRepo.saveRecordAsync({
             code,
             presentationIdentifier: createdPresentation.identifier,
@@ -187,5 +186,64 @@ export class PresentationService extends BaseService<Presentation> {
         }
 
         return count === 1;
+    }
+
+    findOnePresentationVotingCodeAsync(presentationIdentifier: string) {
+        return this._presentationVotingCodeRepo.findOnePresentationVotingCodeAsync({
+            where: {
+                presentationIdentifier: presentationIdentifier,
+                isValid: true,
+                expiresAt: Raw((expiresAt) => `${expiresAt} >= NOW()`),
+            },
+            order: { id: "DESC" },
+        });
+    }
+
+    async addOrFindPresenationVotingCodeAsync(presentationIdentifier: string) {
+        const votingCode = await this._presentationVotingCodeRepo.findOnePresentationVotingCodeAsync({
+            where: { presentationIdentifier },
+            order: { id: "DESC" },
+        });
+
+        // valid code
+        if (votingCode && votingCode.isValid && isBefore(new Date(), votingCode.expiresAt)) {
+            return votingCode;
+        }
+
+        // invalidate this voting code
+        if (votingCode) {
+            await this._presentationVotingCodeRepo.updateRecordByIdAsync(votingCode.id, { isValid: false });
+        }
+
+        const newCode = await this._generateVotingCodeWithCheckingDuplicateAsync(8);
+        const createdCode = await this._presentationVotingCodeRepo.saveRecordAsync({
+            code: newCode,
+            presentationIdentifier,
+            isValid: true,
+            expiresAt: moment().add(2, "days").toDate(),
+        });
+
+        return createdCode;
+    }
+
+    private async _generateVotingCodeWithCheckingDuplicateAsync(codeLength: number) {
+        let retryCount = 0;
+        let isDuplicateCode = false;
+        let code: string;
+
+        do {
+            code = PresentationGenerator.generateVotingCode(codeLength);
+            isDuplicateCode = await this._presentationVotingCodeRepo.existsPresentationVotingCodeAsync({
+                where: { code },
+            });
+
+            if (retryCount >= VOTING_CODE_GENERATION_RETRY_ATTEMPTS) {
+                throw new Error("Max retry count (1 + 3 retry) for regenerating voting code");
+            }
+
+            retryCount += 1;
+        } while (isDuplicateCode);
+
+        return code;
     }
 }

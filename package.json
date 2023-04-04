@@ -17,7 +17,9 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "typeorm": "typeorm -d dist/infrastructure/database/data-source.config.js",
+    "migration:run": "npm run build && npm run typeorm -- migration:run"
   },
   "dependencies": {
     "@huyleminh/nodejs-sdk": "^1.0.1",
@@ -25,6 +27,7 @@
     "@nestjs/core": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/typeorm": "^9.0.1",
+    "date-fns": "^2.29.3",
     "dotenv": "^16.0.3",
     "fast-safe-stringify": "^2.1.1",
     "joi": "^17.9.1",
