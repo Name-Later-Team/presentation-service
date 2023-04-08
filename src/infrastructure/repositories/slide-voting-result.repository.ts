@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { SlideVotingResult } from "src/core/entities";
-import { DataSource } from "typeorm";
+import { DataSource, FindManyOptions, FindOptionsWhere } from "typeorm";
 import { SlideVotingResultSchema } from "../database/schemas";
 import { GenericRepository } from "./generic.repository";
 import { ISlideVotingResultRepository } from "./interfaces";
@@ -18,5 +18,13 @@ export class SlideVotingResultRepository
         private readonly _dataSource: DataSource,
     ) {
         super(_dataSource.getRepository(SlideVotingResultSchema));
+    }
+
+    existsByAsync(options: FindManyOptions<SlideVotingResult>) {
+        return this._repository.exist(options);
+    }
+
+    deleteManySlideVotingResultsAsync(options: FindOptionsWhere<SlideVotingResult>) {
+        return this._repository.delete(options);
     }
 }

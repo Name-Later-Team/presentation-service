@@ -8,14 +8,14 @@ export class PresentationSlide extends IdentifierTimeTrackingEntityPart {
     presentationIdentifier: string;
     question: string;
     questionDescription: string;
-    questionImageUrl: string;
-    questionVideoEmbedUrl: string;
+    questionImageUrl: string | null;
+    questionVideoEmbedUrl: string | null;
     slideType: string;
-    speakerNotes: string;
+    speakerNotes: string | null;
     isActive: boolean;
     showResult: boolean;
     hideInstructionBar: boolean;
-    extrasConfig: string;
+    extrasConfig: string | null;
     position: number;
     textSize: number;
 }
