@@ -15,7 +15,7 @@ export class AppModule implements NestModule, BeforeApplicationShutdown {
     constructor() {}
 
     public configure(consumer: MiddlewareConsumer): void {
-        // consumer.apply(trackingMiddleware).forRoutes("*").apply(RawBodyMiddleware, RsaAuthMiddleware).forRoutes("v1/*");
+        consumer.apply(trackingMiddleware).forRoutes("*").apply(RawBodyMiddleware, RsaAuthMiddleware).forRoutes("v1/*");
     }
 
     beforeApplicationShutdown(signal?: string) {}

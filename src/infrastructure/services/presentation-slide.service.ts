@@ -176,10 +176,8 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         //Update Slides pos
         const curPos = slide.position - 1;
         const sqlUpdateSlidePosition = `
-        SET @cur_pos = ${curPos}  
-
         UPDATE "presentation_slides" 
-        SET position=@cur_pos=@cur_pos+1
+        SET position=position-1
         WHERE presentation_id = ${presentationId} AND position>${slide.position}
         `;
         await this._presentationSlideRepository.executeRawQueryAsync(sqlUpdateSlidePosition);
