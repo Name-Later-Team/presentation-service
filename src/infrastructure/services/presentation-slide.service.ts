@@ -174,8 +174,8 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         await this._presentationRepository.updateRecordByIdAsync(presentationId, presentationDataToUpdate);
 
         //Update Slides pos
-        const curPos = slide.position - 1;
         const sqlUpdateSlidePosition = `
+
         UPDATE "presentation_slides" 
         SET position=position-1
         WHERE presentation_id = ${presentationId} AND position>${slide.position}
