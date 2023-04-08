@@ -157,4 +157,34 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
             results: votingResults.map(({ id, label, score }) => ({ id, label, score: [parseInt(score)] })),
         };
     }
+
+    async deleteOnePresentationSlideAsync(presentation: Presentation, slideId: number) {
+        const slide = await this._presentationSlideRepository.getRecordByIdAsync(slideId);
+
+        if (!slide) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.SLIDE_NOT_FOUND);
+        }
+
+        const { id: presentationId, totalSlides: currentTotalSlids } = presentation;
+        const presentationDataToUpdate: Partial<Presentation> = {
+            totalSlides: currentTotalSlids - 1,
+        };
+
+        //Update Presentation totalSlide number
+        await this._presentationRepository.updateRecordByIdAsync(presentationId, presentationDataToUpdate);
+
+        //Update Slides pos
+        const curPos = slide.position - 1;
+        const sqlUpdateSlidePosition = `
+        SET @cur_pos = ${curPos}  
+
+        UPDATE "presentation_slides" 
+        SET position=@cur_pos=@cur_pos+1
+        WHERE presentation_id = ${presentationId} AND position>${slide.position}
+        `;
+        await this._presentationSlideRepository.executeRawQueryAsync(sqlUpdateSlidePosition);
+
+        //Delete slide
+        await this._presentationSlideRepository.deleteRecordByIdAsync(slideId);
+    }
 }
