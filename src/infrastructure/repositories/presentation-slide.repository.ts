@@ -26,4 +26,8 @@ export class PresentationSlideRepository
     findOnePresentationSlideAsync(options: FindOneOptions<PresentationSlide>) {
         return this._repository.findOne(options);
     }
+
+    deleteManyPresentationSlidesAsync(options: FindOptionsWhere<PresentationSlide>) {
+        return this._repository.delete(options);
+    }
 }

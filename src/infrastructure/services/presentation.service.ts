@@ -1,4 +1,4 @@
-import { ForbiddenException, Inject, Logger } from "@nestjs/common";
+import { Inject, Logger } from "@nestjs/common";
 import { Injectable } from "@nestjs/common/decorators";
 import * as moment from "moment";
 import { PAGINATION, RESPONSE_CODE, VOTING_CODE_GENERATION_RETRY_ATTEMPTS } from "src/common/constants";
@@ -7,12 +7,14 @@ import { PresentationGenerator } from "src/common/utils/generators";
 import { EditBasicInfoPresentationDto, PresentPresentationSlideDto } from "src/core/dtos";
 import { Presentation, PresentationSlide } from "src/core/entities";
 import { BaseService } from "src/core/services";
-import { FindOptionsOrder, Raw } from "typeorm";
+import { FindOptionsOrder, In, Raw } from "typeorm";
 import {
     PRESENTATION_REPO_TOKEN,
     PRESENTATION_SLIDE_REPO_TOKEN,
     PRESENTATION_VOTING_CODE_REPO_TOKEN,
     SLIDE_CHOICE_REPO_TOKEN,
+    SLIDE_VOTING_RESULT_REPO_TOKEN,
+    SlideVotingResultRepository,
 } from "../repositories";
 import {
     IPresentationRepository,
@@ -34,6 +36,8 @@ export class PresentationService extends BaseService<Presentation> {
         private readonly _presentationVotingCodeRepo: IPresentationVotingCodeRepository,
         @Inject(SLIDE_CHOICE_REPO_TOKEN)
         private readonly _slideChoiceRepo: ISlideChoiceRepository,
+        @Inject(SLIDE_VOTING_RESULT_REPO_TOKEN)
+        private readonly _slideVotingResultRepository: SlideVotingResultRepository,
     ) {
         super(_presentationRepository);
     }
@@ -362,5 +366,30 @@ export class PresentationService extends BaseService<Presentation> {
             const dataToUpdate: Partial<Presentation> = { pace: newPace };
             await this._presentationRepository.updateRecordByIdAsync(presentation.id, dataToUpdate);
         }
+    }
+
+    async deleteOnePresentationAsync(userId: string, flexiblePresentationIdentifier: string | number) {
+        const presentation = await this.findOnePresentationAsync(userId, flexiblePresentationIdentifier);
+        if (presentation.pace.state === PresentationPaceStateEnum.PRESENTING) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTING_PRESENTATION);
+        }
+
+        const { id: presentationId, identifier: presentationIdentifier } = presentation;
+
+        const slides = await this._presentationSlideRepository.findManyPresentationSlidesAsync({
+            select: { id: true },
+            where: { presentationId },
+        });
+        const slideIds = slides.map((it) => it.id);
+
+        // firstly remove presentation to ensure that voting, slide and choices will be never accessed from outside
+        // remove presentation and voting codes
+        await this._presentationRepository.deleteRecordByIdAsync(presentationId);
+        await this._presentationVotingCodeRepo.deleteManyVotingCodesAsync({ presentationIdentifier });
+
+        // remove slides, choices and voting results
+        await this._presentationSlideRepository.deleteManyPresentationSlidesAsync({ presentationId });
+        await this._slideChoiceRepo.deleteManySlideChoicesAsync({ slideId: In(slideIds) });
+        await this._slideVotingResultRepository.deleteManySlideVotingResultsAsync({ slideId: In(slideIds) });
     }
 }

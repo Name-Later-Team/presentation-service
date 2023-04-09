@@ -130,7 +130,7 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
     async getVotingResultsBySlideIdAsync(slideId: number) {
         // ensure that slideId is an integer number and valid serial id
         const safeSlideId = parseInt(slideId.toString());
-        if (Number.isNaN(safeSlideId) && safeSlideId < 1) {
+        if (Number.isNaN(safeSlideId) || safeSlideId < 1) {
             throw new Error("slideId must be an integer number and greater than zero");
         }
 
@@ -154,9 +154,15 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         `;
 
         // { id: number, label: string, score: string }[]
-        const votingResults = await this._slideChoiceRepository.executeRawQueryAsync(sqlVotingResults);
-        // { respondents: string }[]
-        const respondents = await this._slideVotingResultRepository.executeRawQueryAsync(sqlRespondents);
+        const votingResults: Array<{
+            id: number;
+            label: string;
+            score: string;
+        }> = await this._slideChoiceRepository.executeRawQueryAsync(sqlVotingResults);
+
+        const respondents: Array<{
+            respondents: string;
+        }> = await this._slideVotingResultRepository.executeRawQueryAsync(sqlRespondents);
 
         return {
             respondents: parseInt(_.get(respondents, "[0].respondents", "0")),
