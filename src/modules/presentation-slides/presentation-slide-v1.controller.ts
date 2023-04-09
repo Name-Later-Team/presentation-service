@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Inject, Param, Post, Put, Req } from "@nestjs/common";
 import { Request } from "express";
-import { PRESENTATION_PACE_STATE, RESPONSE_CODE } from "src/common/constants";
+import { RESPONSE_CODE } from "src/common/constants";
 import { SimpleBadRequestException } from "src/common/exceptions";
 import {
     CreatePresentationSlideDto,
@@ -21,6 +21,7 @@ import {
     FindOnePresentationSlideValidationPipe,
     PresentationIdentifierValidationPipe,
 } from "./pipes";
+import { PresentationPaceStateEnum } from "src/common/types";
 
 @Controller("v1/presentations/:presentationIdentifier/slides")
 export class PresentationSlideControllerV1 {
@@ -42,7 +43,7 @@ export class PresentationSlideControllerV1 {
         const presentation = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier);
 
         // The presentation is presenting
-        if (presentation.pace.state === PRESENTATION_PACE_STATE.PRESENTING) {
+        if (presentation.pace.state === PresentationPaceStateEnum.PRESENTING) {
             throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTING_PRESENTATION);
         }
 

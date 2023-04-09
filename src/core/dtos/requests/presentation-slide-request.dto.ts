@@ -1,12 +1,11 @@
-import { PRESENTATION_SLIDE_TYPE } from "src/common/constants";
-import { SlideChoice } from "src/core/entities";
+import { PresentationSlideTypeEnum } from "src/common/types";
 
 export interface PresentationIdentifierDto {
     presentationIdentifier: number | string;
 }
 
 export interface CreatePresentationSlideDto {
-    type: PRESENTATION_SLIDE_TYPE;
+    type: PresentationSlideTypeEnum;
 }
 
 export interface FindOnePresentationSlideDto {

@@ -1,7 +1,7 @@
 import { Inject, Logger } from "@nestjs/common";
 import { Injectable } from "@nestjs/common/decorators";
 import * as _ from "lodash";
-import { PRESENTATION_PACE_STATE, PRESENTATION_SLIDE_TYPE, RESPONSE_CODE } from "src/common/constants";
+import { RESPONSE_CODE } from "src/common/constants";
 import { SimpleBadRequestException } from "src/common/exceptions";
 import { PresentationGenerator } from "src/common/utils/generators";
 import { EditPresentationSlideDto } from "src/core/dtos";
@@ -20,6 +20,7 @@ import {
     ISlideChoiceRepository,
     ISlideVotingResultRepository,
 } from "../repositories/interfaces";
+import { PresentationPaceStateEnum, PresentationSlideTypeEnum } from "src/common/types";
 
 export const PRESENTATION_SLIDE_SERVICE_TOKEN = Symbol("PresentationSlideService");
 
@@ -38,7 +39,7 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         super(_presentationSlideRepository);
     }
 
-    async createSlideAsync(presentation: Presentation, slideType: PRESENTATION_SLIDE_TYPE) {
+    async createSlideAsync(presentation: Presentation, slideType: PresentationSlideTypeEnum) {
         const {
             id: presentationId,
             identifier: presentationIdentifier,
@@ -72,7 +73,7 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         // Update presentation to link the first slide information
         await this._presentationRepository.updateRecordByIdAsync(presentationId, presentationDataToUpdate);
 
-        if (slideType === PRESENTATION_SLIDE_TYPE.MULTIPLE_CHOICE) {
+        if (slideType === PresentationSlideTypeEnum.MULTIPLE_CHOICE) {
             // Create default slide choices: 1 option
             const optionList = PresentationGenerator.generateMultipleChoiceOptions(1, createdSlide.id);
             await this._slideChoiceRepository.saveManyRecordAsync(optionList);
@@ -202,7 +203,7 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         }
 
         // Check presentation pace
-        if (presentation.pace.state === PRESENTATION_PACE_STATE.PRESENTING) {
+        if (presentation.pace.state === PresentationPaceStateEnum.PRESENTING) {
             throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTING_PRESENTATION);
         }
 

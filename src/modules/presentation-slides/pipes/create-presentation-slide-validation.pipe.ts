@@ -1,14 +1,14 @@
 import { ArgumentMetadata, Injectable, PipeTransform } from "@nestjs/common";
 import * as Joi from "joi";
-import { PRESENTATION_SLIDE_TYPE } from "src/common/constants";
 import { RequestValidationException } from "src/common/exceptions";
+import { PresentationSlideTypeEnum } from "src/common/types";
 import { CreatePresentationSlideDto } from "src/core/dtos";
 
 const createPresentationValidationSlideSchema = Joi.object({
     type: Joi.string()
         .required()
         .trim()
-        .valid(...Object.values(PRESENTATION_SLIDE_TYPE))
+        .valid(...Object.values(PresentationSlideTypeEnum))
         .messages({
             "any.required": "Loại trang trình chiếu không được bỏ trống",
             "string.base": "Loại trang trình chiếu phải là chuỗi",

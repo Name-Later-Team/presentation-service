@@ -1,5 +1,7 @@
 // defines presentaton request dtos
 
+import { PresentPresentationActionEnum } from "src/common/types";
+
 export interface CreatePresentationDto {
     name: string;
 }
@@ -17,4 +19,9 @@ export interface FindOnePresentationDto {
 export interface EditBasicInfoPresentationDto {
     closedForVoting: boolean;
     name: string;
+}
+
+export interface PresentPresentationSlideDto {
+    slideId: number | null;
+    action: PresentPresentationActionEnum;
 }
