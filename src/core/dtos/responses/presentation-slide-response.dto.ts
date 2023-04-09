@@ -1,7 +1,7 @@
 import { PresentationSlide } from "src/core/entities";
 
 export type FindOnePresentatonSlideResponseDto = PresentationSlide & {
-    results?: {
+    votingResult?: {
         respondents: number;
         results: any;
     };

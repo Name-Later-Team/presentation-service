@@ -73,7 +73,7 @@ export class PresentationSlideControllerV1 {
         const respData: FindOnePresentatonSlideResponseDto = { ...slide };
         if (includeResults) {
             const votingResults = await this._presentationSlideService.getVotingResultsBySlideIdAsync(slideId);
-            respData.results = votingResults;
+            respData.votingResult = votingResults;
         }
 
         return new DataResponse(respData);
