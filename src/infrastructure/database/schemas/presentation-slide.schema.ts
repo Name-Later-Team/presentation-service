@@ -22,7 +22,7 @@ export const PresentationSlideSchema = new EntitySchema<PresentationSlide>({
         hideInstructionBar: { type: "boolean", name: "hide_instruction_bar", default: false },
         extrasConfig: { type: "text", name: "extras_config", nullable: true },
         position: { type: "smallint" },
-        textSize: { type: "int", name: "text_size", default: 12, nullable: false },
+        textSize: { type: "int", name: "text_size", default: 32, nullable: false },
     },
     checks: [{ expression: `"presentation_id" > 0` }],
 });

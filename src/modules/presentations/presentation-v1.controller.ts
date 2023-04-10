@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Inject, Param, Post, Put, Query, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Post, Put, Query, Req } from "@nestjs/common";
 import { Request } from "express";
 import * as _ from "lodash";
 import { RESPONSE_CODE } from "src/common/constants";
@@ -132,5 +132,17 @@ export class PresentationControllerV1 {
         const presentationIdentifier = params.identifier;
 
         await this._presentationService.presentPresentationSlideAsync(userId, presentationIdentifier, presentSlideDto);
+    }
+
+    @Delete("/:identifier")
+    @HttpCode(204)
+    async deleteOnePresentationAsync(
+        @Req() request: Request,
+        @Param(new FindOnePresentationValidationPipe()) params: FindOnePresentationDto,
+    ) {
+        const userId = request.userinfo.identifier;
+        const presentationIdentifier = params.identifier;
+
+        await this._presentationService.deleteOnePresentationAsync(userId, presentationIdentifier);
     }
 }

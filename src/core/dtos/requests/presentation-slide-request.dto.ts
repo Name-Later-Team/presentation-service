@@ -13,6 +13,10 @@ export interface FindOnePresentationSlideDto {
     slideId: number;
 }
 
+export interface FindOnePresentationSlideQueryDto {
+    includeResults?: boolean;
+}
+
 export interface EditPresentationSlideChoiceDto {
     id: number;
     label: string;

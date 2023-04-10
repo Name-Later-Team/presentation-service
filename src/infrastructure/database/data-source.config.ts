@@ -7,7 +7,10 @@ import {
     SlideChoiceSchema,
     SlideVotingResultSchema,
 } from "./schemas";
-import { AddTextSizeIntoPresentationSlideTable1680573463021 } from "./migrations";
+import {
+    AddTextSizeIntoPresentationSlideTable1680573463021,
+    ChangeDefaultValueOfTextSizeInPresentationSlideTable1681090963041,
+} from "./migrations";
 
 export const dataSourceOptions: DataSourceOptions = {
     type: "postgres",
@@ -25,7 +28,10 @@ export const dataSourceOptions: DataSourceOptions = {
         SlideChoiceSchema,
         SlideVotingResultSchema,
     ],
-    migrations: [AddTextSizeIntoPresentationSlideTable1680573463021],
+    migrations: [
+        AddTextSizeIntoPresentationSlideTable1680573463021,
+        ChangeDefaultValueOfTextSizeInPresentationSlideTable1681090963041,
+    ],
 };
 
 // It hasn't established a connection to postgres db because the `intialize()` function still wasn't be called
