@@ -2,12 +2,7 @@ import { Body, Controller, Delete, Get, Inject, Param, Post, Req } from "@nestjs
 import { Request } from "express";
 import { PRESENTATION_PACE_STATE, RESPONSE_CODE } from "src/common/constants";
 import { SimpleBadRequestException } from "src/common/exceptions";
-import {
-    CreatePresentationSlideDto,
-    DeleteOnePresentationSlideDTO,
-    FindOnePresentationSlideDto,
-    PresentationIdentifierDto,
-} from "src/core/dtos";
+import { CreatePresentationSlideDto, FindOnePresentationSlideDto, PresentationIdentifierDto } from "src/core/dtos";
 import { CreatedResponse, DataResponse } from "src/core/response";
 import {
     PRESENTATION_SERVICE_TOKEN,
@@ -88,7 +83,7 @@ export class PresentationSlideControllerV1 {
     @Delete("/:slideId")
     async deleteSlideAsync(
         @Req() request: Request,
-        @Param(new FindOnePresentationSlideValidationPipe()) pathParams: DeleteOnePresentationSlideDTO,
+        @Param(new FindOnePresentationSlideValidationPipe()) pathParams: FindOnePresentationSlideDto,
     ) {
         const userId = request.userinfo.identifier;
         const { presentationIdentifier, slideId } = pathParams;

@@ -159,30 +159,61 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
     }
 
     async deleteOnePresentationSlideAsync(presentation: Presentation, slideId: number) {
-        const slide = await this._presentationSlideRepository.getRecordByIdAsync(slideId);
+        const safeSlideId = parseInt(slideId.toString());
+        if (Number.isNaN(safeSlideId) && safeSlideId < 1) {
+            throw new Error("slideId must be an integer number and greater than zero");
+        }
+        const slide = await this._presentationSlideRepository.getRecordByIdAsync(safeSlideId);
+        const { id: presentationId, totalSlides: currentTotalSlids, pace: currentPace } = presentation;
 
         if (!slide) {
             throw new SimpleBadRequestException(RESPONSE_CODE.SLIDE_NOT_FOUND);
         }
 
-        const { id: presentationId, totalSlides: currentTotalSlids } = presentation;
+        if (slide.presentationId !== presentationId) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.SLIDE_NOT_FOUND);
+        }
+
+        const safeSlidePos = parseInt(slide.position.toString());
+        if (Number.isNaN(safeSlidePos) && safeSlidePos < 1) {
+            throw new Error("Slide Position must be an integer number and greater than zero");
+        }
+        const safePresentationId = parseInt(presentationId.toString());
+        if (Number.isNaN(safePresentationId) && safePresentationId < 1) {
+            throw new Error("Presentation ID must be an integer number and greater than zero");
+        }
+
+        //Update Presentation totalSlide number
         const presentationDataToUpdate: Partial<Presentation> = {
             totalSlides: currentTotalSlids - 1,
         };
-
-        //Update Presentation totalSlide number
-        await this._presentationRepository.updateRecordByIdAsync(presentationId, presentationDataToUpdate);
+        if (slide.position !== currentTotalSlids - 1) {
+            await this._presentationRepository.updateRecordByIdAsync(presentationId, presentationDataToUpdate);
+        }
 
         //Update Slides pos
         const sqlUpdateSlidePosition = `
 
         UPDATE "presentation_slides" 
         SET position=position-1
-        WHERE presentation_id = ${presentationId} AND position>${slide.position}
+        WHERE presentation_id = ${safePresentationId} AND position>${safeSlidePos}
         `;
-        await this._presentationSlideRepository.executeRawQueryAsync(sqlUpdateSlidePosition);
 
-        //Delete slide
+        //Delete all choice
+        const sqlDeleteChoice = `
+        DELETE FROM slide_choices
+        WHERE slide_id= ${safeSlideId};
+        `;
+        //Delete all voting result
+        const sqlDeleteVoting = `
+        DELETE FROM slide_voting_results
+        WHERE slide_id= ${safeSlideId};
+        `;
+
+        //SQL execution
+        await this._slideChoiceRepository.executeRawQueryAsync(sqlDeleteChoice);
+        await this._presentationSlideRepository.executeRawQueryAsync(sqlUpdateSlidePosition);
+        await this._slideVotingResultRepository.executeRawQueryAsync(sqlDeleteVoting);
         await this._presentationSlideRepository.deleteRecordByIdAsync(slideId);
     }
 }

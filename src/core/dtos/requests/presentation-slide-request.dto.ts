@@ -12,5 +12,3 @@ export interface FindOnePresentationSlideDto {
     presentationIdentifier: number | string;
     slideId: number;
 }
-
-export type DeleteOnePresentationSlideDTO = Pick<FindOnePresentationSlideDto, "presentationIdentifier" | "slideId">;
