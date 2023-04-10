@@ -25,4 +25,8 @@ export class PresentationSlideRepository
     countPresentationSlidesAsync(where: FindOptionsWhere<PresentationSlide> | FindOptionsWhere<PresentationSlide>[]) {
         return this._repository.countBy(where);
     }
+
+    findOnePresentationSlideAsync(options: FindOneOptions<PresentationSlide>) {
+        return this._repository.findOne(options);
+    }
 }
