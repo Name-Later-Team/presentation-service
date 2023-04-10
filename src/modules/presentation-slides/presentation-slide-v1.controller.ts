@@ -1,8 +1,13 @@
-import { Body, Controller, Get, Inject, Param, Post, Req } from "@nestjs/common";
+import { Body, Controller, Get, Inject, Param, Post, Put, Req } from "@nestjs/common";
 import { Request } from "express";
 import { PRESENTATION_PACE_STATE, RESPONSE_CODE } from "src/common/constants";
 import { SimpleBadRequestException } from "src/common/exceptions";
-import { CreatePresentationSlideDto, FindOnePresentationSlideDto, PresentationIdentifierDto } from "src/core/dtos";
+import {
+    CreatePresentationSlideDto,
+    EditPresentationSlideDto,
+    FindOnePresentationSlideDto,
+    PresentationIdentifierDto,
+} from "src/core/dtos";
 import { CreatedResponse, DataResponse } from "src/core/response";
 import {
     PRESENTATION_SERVICE_TOKEN,
@@ -12,6 +17,7 @@ import {
 } from "src/infrastructure/services";
 import {
     CreatePresentationSlideValidationPipe,
+    EditPresentationSlideValidationPipe,
     FindOnePresentationSlideValidationPipe,
     PresentationIdentifierValidationPipe,
 } from "./pipes";
@@ -79,5 +85,24 @@ export class PresentationSlideControllerV1 {
 
         const votingResults = await this._presentationSlideService.getVotingResultsBySlideIdAsync(slideId);
         return new DataResponse({ ...votingResults, slideId });
+    }
+
+    @Put("/:slideId")
+    async editSlideByIdAsync(
+        @Req() request: Request,
+        @Param(new FindOnePresentationSlideValidationPipe()) pathParams: FindOnePresentationSlideDto,
+        @Body(new EditPresentationSlideValidationPipe()) editPresentationSlideDto: EditPresentationSlideDto,
+    ) {
+        const userId = request.userinfo.identifier;
+        const { presentationIdentifier, slideId } = pathParams;
+
+        await this._presentationSlideService.editSlideAsync(
+            userId,
+            presentationIdentifier,
+            slideId,
+            editPresentationSlideDto,
+        );
+        const updatedSlide = await this._presentationSlideService.findOnePresentationSlideAsync(slideId);
+        return new DataResponse(updatedSlide);
     }
 }
