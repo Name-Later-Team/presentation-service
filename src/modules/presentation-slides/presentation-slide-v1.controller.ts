@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Put, Query, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Post, Put, Query, Req } from "@nestjs/common";
 import { Request } from "express";
 import { RESPONSE_CODE } from "src/common/constants";
 import { SimpleBadRequestException } from "src/common/exceptions";
@@ -117,5 +117,28 @@ export class PresentationSlideControllerV1 {
         );
         const updatedSlide = await this._presentationSlideService.findOnePresentationSlideAsync(slideId);
         return new DataResponse(updatedSlide);
+    }
+    @Delete("/:slideId")
+    async deleteSlideAsync(
+        @Req() request: Request,
+        @Param(new FindOnePresentationSlideValidationPipe()) pathParams: FindOnePresentationSlideDto,
+    ) {
+        const userId = request.userinfo.identifier;
+        const { presentationIdentifier, slideId } = pathParams;
+
+        // check existence of the given presentation and throw an error if it doesn't exist
+        const presentation = await this._presentationService.findOnePresentationAsync(
+            userId,
+            presentationIdentifier,
+            true,
+        );
+        if (presentation.pace.state === PRESENTATION_PACE_STATE.PRESENTING) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTING_PRESENTATION);
+        }
+        if (presentation.totalSlides === 1) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.DELETE_ONLY_SLIDE);
+        }
+        await this._presentationSlideService.deleteOnePresentationSlideAsync(presentation, slideId);
+        return new DataResponse(null);
     }
 }
