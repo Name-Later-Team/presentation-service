@@ -14,9 +14,6 @@ export class PresentationSlideRepository
     constructor(@InjectDataSource() private readonly _dataSource: DataSource) {
         super(_dataSource.getRepository(PresentationSlideSchema));
     }
-    findOnePresentationSlide(options: FindOneOptions<PresentationSlide>): Promise<PresentationSlide> {
-        return this._repository.findOne(options);
-    }
 
     findManyPresentationSlidesAsync(options: FindManyOptions<PresentationSlide>): Promise<PresentationSlide[]> {
         return this._repository.find(options);

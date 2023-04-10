@@ -8,5 +8,4 @@ export interface IPresentationSlideRepository extends IGenericRepository<Present
         where: FindOptionsWhere<PresentationSlide> | FindOptionsWhere<PresentationSlide>[],
     ): Promise<number>;
     findOnePresentationSlideAsync(options: FindOneOptions<PresentationSlide>): Promise<PresentationSlide | null>;
-    findOnePresentationSlide(options: FindOneOptions<PresentationSlide>): Promise<PresentationSlide | null>;
 }

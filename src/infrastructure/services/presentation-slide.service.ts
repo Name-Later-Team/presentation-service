@@ -342,7 +342,7 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
             totalSlides: currentTotalSlids - 1,
         };
         if (currentPace.active_slide_id === safeSlideId) {
-            const activeSlide = await this._presentationSlideRepository.findOnePresentationSlide({
+            const activeSlide = await this._presentationSlideRepository.findOnePresentationSlideAsync({
                 where: {
                     presentationId: safePresentationId,
                     position: safeSlidePos !== currentTotalSlids - 1 ? safeSlidePos + 1 : safeSlidePos - 1,
