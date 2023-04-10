@@ -132,7 +132,7 @@ export class PresentationSlideControllerV1 {
             presentationIdentifier,
             true,
         );
-        if (presentation.pace.state === PRESENTATION_PACE_STATE.PRESENTING) {
+        if (presentation.pace.state === PresentationPaceStateEnum.PRESENTING) {
             throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTING_PRESENTATION);
         }
         if (presentation.totalSlides === 1) {
