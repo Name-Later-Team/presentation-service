@@ -118,13 +118,15 @@ const editPresentationValidationSlideSchema = Joi.object<EditPresentationSlideDt
         "number.base": "Thứ tự trang trình chiếu không hợp lệ",
         "number.greater": "Thứ tự trang trình chiếu không hợp lệ",
     }),
-    textSize: Joi.number().integer().greater(0).required().messages({
-        "any.required": "Kích cỡ chữ của trang trình chiếu là bắt buộc",
-        "number.base": "Kích cỡ chữ của trang trình chiếu phải là giá trị số",
-        "number.greater": "Kích cỡ chữ của trang trình chiếu không hợp lệ",
+    textSize: Joi.number().integer().min(24).max(42).required().messages({
+        "any.required": "Cỡ chữ của trang trình chiếu là bắt buộc",
+        "number.base": "Cỡ chữ của trang trình chiếu phải là giá trị số",
+        "number.min": "Cỡ chữ của trang trình chiếu không được bé hơn 24",
+        "number.max": "Cỡ chữ của trang trình chiếu không được lớn hơn 42",
+        "number.ref": "Cỡ chữ của trang trình chiếu không hợp lệ",
     }),
     choices: Joi.array().items(editPresentationSlideChoiceDto).required().messages({
-        "any.required": "Kích cỡ chữ của trang trình chiếu là bắt buộc",
+        "any.required": "Danh sách câu trả lời là bắt buộc",
     }),
 }).options({
     allowUnknown: true,
