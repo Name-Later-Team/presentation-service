@@ -1,6 +1,6 @@
 import { InjectDataSource } from "@nestjs/typeorm";
 import { PresentationSlide } from "src/core/entities";
-import { DataSource, FindManyOptions, FindOptionsWhere } from "typeorm";
+import { DataSource, FindManyOptions, FindOneOptions, FindOptionsWhere } from "typeorm";
 import { PresentationSlideSchema } from "../database/schemas";
 import { GenericRepository } from "./generic.repository";
 import { IPresentationSlideRepository } from "./interfaces";
@@ -13,6 +13,9 @@ export class PresentationSlideRepository
 {
     constructor(@InjectDataSource() private readonly _dataSource: DataSource) {
         super(_dataSource.getRepository(PresentationSlideSchema));
+    }
+    findOnePresentationSlide(options: FindOneOptions<PresentationSlide>): Promise<PresentationSlide> {
+        return this._repository.findOne(options);
     }
 
     findManyPresentationSlidesAsync(options: FindManyOptions<PresentationSlide>): Promise<PresentationSlide[]> {

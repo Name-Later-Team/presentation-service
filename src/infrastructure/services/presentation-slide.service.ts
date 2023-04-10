@@ -165,7 +165,7 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         }
         const slide = await this._presentationSlideRepository.getRecordByIdAsync(safeSlideId);
         const { id: presentationId, totalSlides: currentTotalSlids, pace: currentPace } = presentation;
-
+        console.log(currentTotalSlids);
         if (!slide) {
             throw new SimpleBadRequestException(RESPONSE_CODE.SLIDE_NOT_FOUND);
         }
@@ -183,21 +183,38 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
             throw new Error("Presentation ID must be an integer number and greater than zero");
         }
 
-        //Update Presentation totalSlide number
-        const presentationDataToUpdate: Partial<Presentation> = {
+        //Update Presentation totalSlide and pace
+        let presentationDataToUpdate: Partial<Presentation> = {
             totalSlides: currentTotalSlids - 1,
         };
-        if (slide.position !== currentTotalSlids - 1) {
-            await this._presentationRepository.updateRecordByIdAsync(presentationId, presentationDataToUpdate);
+        if (currentPace.active_slide_id === safeSlideId) {
+            const activeSlide = await this._presentationSlideRepository.findOnePresentationSlide({
+                where: {
+                    presentationId: safePresentationId,
+                    position: safeSlidePos !== currentTotalSlids - 1 ? safeSlidePos + 1 : safeSlidePos - 1,
+                },
+            });
+
+            presentationDataToUpdate = {
+                totalSlides: currentTotalSlids - 1,
+                pace: {
+                    ...currentPace,
+                    active_slide_id: activeSlide.id,
+                },
+            };
         }
+        await this._presentationRepository.updateRecordByIdAsync(presentationId, presentationDataToUpdate);
 
         //Update Slides pos
-        const sqlUpdateSlidePosition = `
+        if (safeSlidePos !== currentTotalSlids - 1) {
+            const sqlUpdateSlidePosition = `
 
-        UPDATE "presentation_slides" 
-        SET position=position-1
-        WHERE presentation_id = ${safePresentationId} AND position>${safeSlidePos}
-        `;
+            UPDATE "presentation_slides" 
+            SET position=position-1
+            WHERE presentation_id = ${safePresentationId} AND position>${safeSlidePos}
+            `;
+            await this._presentationSlideRepository.executeRawQueryAsync(sqlUpdateSlidePosition);
+        }
 
         //Delete all choice
         const sqlDeleteChoice = `
@@ -212,7 +229,6 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
 
         //SQL execution
         await this._slideChoiceRepository.executeRawQueryAsync(sqlDeleteChoice);
-        await this._presentationSlideRepository.executeRawQueryAsync(sqlUpdateSlidePosition);
         await this._slideVotingResultRepository.executeRawQueryAsync(sqlDeleteVoting);
         await this._presentationSlideRepository.deleteRecordByIdAsync(slideId);
     }
