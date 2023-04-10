@@ -314,12 +314,11 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
 
     async deleteOnePresentationSlideAsync(presentation: Presentation, slideId: number) {
         const safeSlideId = parseInt(slideId.toString());
-        if (Number.isNaN(safeSlideId) && safeSlideId < 1) {
+        if (Number.isNaN(safeSlideId) || safeSlideId < 1) {
             throw new Error("slideId must be an integer number and greater than zero");
         }
         const slide = await this._presentationSlideRepository.getRecordByIdAsync(safeSlideId);
         const { id: presentationId, totalSlides: currentTotalSlids, pace: currentPace } = presentation;
-        console.log(currentTotalSlids);
         if (!slide) {
             throw new SimpleBadRequestException(RESPONSE_CODE.SLIDE_NOT_FOUND);
         }
@@ -329,11 +328,11 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         }
 
         const safeSlidePos = parseInt(slide.position.toString());
-        if (Number.isNaN(safeSlidePos) && safeSlidePos < 1) {
+        if (Number.isNaN(safeSlidePos) || safeSlidePos < 1) {
             throw new Error("Slide Position must be an integer number and greater than zero");
         }
         const safePresentationId = parseInt(presentationId.toString());
-        if (Number.isNaN(safePresentationId) && safePresentationId < 1) {
+        if (Number.isNaN(safePresentationId) || safePresentationId < 1) {
             throw new Error("Presentation ID must be an integer number and greater than zero");
         }
 
@@ -382,8 +381,9 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         `;
 
         //SQL execution
+        await this._presentationSlideRepository.deleteRecordByIdAsync(slideId);
+
         await this._slideChoiceRepository.executeRawQueryAsync(sqlDeleteChoice);
         await this._slideVotingResultRepository.executeRawQueryAsync(sqlDeleteVoting);
-        await this._presentationSlideRepository.deleteRecordByIdAsync(slideId);
     }
 }
