@@ -20,7 +20,7 @@ import {
     ISlideChoiceRepository,
     ISlideVotingResultRepository,
 } from "../repositories/interfaces";
-import { PresentationPaceStateEnum, PresentationSlideTypeEnum } from "src/common/types";
+import { PresentationPaceStateEnum, PresentationSlideTypeEnum } from "src/core/types";
 
 export const PRESENTATION_SLIDE_SERVICE_TOKEN = Symbol("PresentationSlideService");
 

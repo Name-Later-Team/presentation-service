@@ -22,7 +22,7 @@ import {
     IPresentationVotingCodeRepository,
     ISlideChoiceRepository,
 } from "../repositories/interfaces";
-import { PresentPresentationActionEnum, PresentationPaceStateEnum } from "src/common/types";
+import { PresentPresentationActionEnum, PresentationPaceStateEnum } from "src/core/types";
 
 export const PRESENTATION_SERVICE_TOKEN = Symbol("PresentationService");
 

@@ -1,7 +1,7 @@
 import { ArgumentMetadata, Injectable, PipeTransform } from "@nestjs/common";
 import * as Joi from "joi";
 import { RequestValidationException } from "src/common/exceptions";
-import { PresentationSlideTypeEnum } from "src/common/types";
+import { PresentationSlideTypeEnum } from "src/core/types";
 import { EditPresentationSlideChoiceDto, EditPresentationSlideDto } from "src/core/dtos";
 
 const editPresentationSlideChoiceDto = Joi.object<EditPresentationSlideChoiceDto>({

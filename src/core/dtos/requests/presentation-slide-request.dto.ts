@@ -1,4 +1,4 @@
-import { PresentationSlideTypeEnum } from "src/common/types";
+import { PresentationSlideTypeEnum } from "src/core/types";
 
 export interface PresentationIdentifierDto {
     presentationIdentifier: number | string;
