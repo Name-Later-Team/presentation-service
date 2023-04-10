@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Put, Query, Req } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Put, Query, Req } from "@nestjs/common";
 import { Request } from "express";
 import * as _ from "lodash";
 import { RESPONSE_CODE } from "src/common/constants";
@@ -8,6 +8,7 @@ import {
     EditBasicInfoPresentationDto,
     FindAllPresentationsDto,
     FindOnePresentationDto,
+    PresentPresentationSlideDto,
 } from "src/core/dtos";
 import { CreatedResponse, DataResponse, UpdateResponse } from "src/core/response";
 import { PRESENTATION_SERVICE_TOKEN, PresentationService } from "src/infrastructure/services";
@@ -16,6 +17,7 @@ import {
     EditBasicInfoPresentationValidationPipe,
     FindAllPresentationsValidationPipe,
     FindOnePresentationValidationPipe,
+    PresentPresentationSlideValidationPipe,
 } from "./pipes";
 
 @Controller("v1/presentations")
@@ -117,5 +119,18 @@ export class PresentationControllerV1 {
 
         const result = _.omit(votingCode, ["id", "presentationIdentifier"]);
         return new DataResponse(result);
+    }
+
+    @Post("/:identifier/present")
+    @HttpCode(204)
+    async presentPresentationSlideAsync(
+        @Req() request: Request,
+        @Param(new FindOnePresentationValidationPipe()) params: FindOnePresentationDto,
+        @Body(new PresentPresentationSlideValidationPipe()) presentSlideDto: PresentPresentationSlideDto,
+    ) {
+        const userId = request.userinfo.identifier;
+        const presentationIdentifier = params.identifier;
+
+        await this._presentationService.presentPresentationSlideAsync(userId, presentationIdentifier, presentSlideDto);
     }
 }
