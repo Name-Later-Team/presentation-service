@@ -369,21 +369,14 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
             await this._presentationSlideRepository.executeRawQueryAsync(sqlUpdateSlidePosition);
         }
 
-        //Delete all choice
-        const sqlDeleteChoice = `
-        DELETE FROM slide_choices
-        WHERE slide_id= ${safeSlideId};
-        `;
-        //Delete all voting result
-        const sqlDeleteVoting = `
-        DELETE FROM slide_voting_results
-        WHERE slide_id= ${safeSlideId};
-        `;
-
-        //SQL execution
+        //Repositories delete
         await this._presentationSlideRepository.deleteRecordByIdAsync(slideId);
 
-        await this._slideChoiceRepository.executeRawQueryAsync(sqlDeleteChoice);
-        await this._slideVotingResultRepository.executeRawQueryAsync(sqlDeleteVoting);
+        await this._slideChoiceRepository.deleteManySlideChoicesAsync({
+            slideId: safeSlideId,
+        });
+        await this._slideVotingResultRepository.deleteManySlideVotingResultsAsync({
+            slideId: safeSlideId,
+        });
     }
 }
