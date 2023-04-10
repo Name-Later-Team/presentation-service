@@ -1,6 +1,6 @@
 // defines presentaton request dtos
 
-import { PresentPresentationActionEnum } from "src/common/types";
+import { PresentPresentationActionEnum } from "src/core/types";
 
 export interface CreatePresentationDto {
     name: string;

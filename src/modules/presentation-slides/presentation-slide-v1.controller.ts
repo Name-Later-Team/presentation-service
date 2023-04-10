@@ -21,7 +21,7 @@ import {
     FindOnePresentationSlideValidationPipe,
     PresentationIdentifierValidationPipe,
 } from "./pipes";
-import { PresentationPaceStateEnum } from "src/common/types";
+import { PresentationPaceStateEnum } from "src/core/types";
 
 @Controller("v1/presentations/:presentationIdentifier/slides")
 export class PresentationSlideControllerV1 {

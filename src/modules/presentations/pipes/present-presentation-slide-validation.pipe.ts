@@ -1,7 +1,7 @@
 import { ArgumentMetadata, Injectable, PipeTransform } from "@nestjs/common";
 import * as Joi from "joi";
 import { RequestValidationException } from "src/common/exceptions";
-import { PresentPresentationActionEnum } from "src/common/types";
+import { PresentPresentationActionEnum } from "src/core/types";
 import { PresentPresentationSlideDto } from "src/core/dtos";
 
 const presentPresentationSlideValidationSchema = Joi.object<PresentPresentationSlideDto>({
