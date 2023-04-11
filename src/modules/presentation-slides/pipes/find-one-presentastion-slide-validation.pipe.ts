@@ -26,7 +26,8 @@ const findOnePresentationSlideValidationSchema = Joi.object<FindOnePresentationS
         .messages({
             "any.required": "Mã định danh bài trình bày là bắt buộc",
         }),
-    slideId: Joi.number().integer().greater(0).messages({
+    slideId: Joi.number().integer().greater(0).required().messages({
+        "any.required": "Mã định danh trang trình chiếu là bắt buộc",
         "number.base": "Mã định danh trang trình chiếu không hợp lệ",
         "number.greater": "Mã định danh trang trình chiếu không hợp lệ",
         "number.infinity": "Mã định danh trang trình chiếu không hợp lệ",

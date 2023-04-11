@@ -39,3 +39,4 @@ lerna-debug.log*
 .env.production
 
 .npmrc
+.vscode/settings.json

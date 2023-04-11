@@ -2,17 +2,19 @@ import { Inject, Logger } from "@nestjs/common";
 import { Injectable } from "@nestjs/common/decorators";
 import * as moment from "moment";
 import { PAGINATION, RESPONSE_CODE, VOTING_CODE_GENERATION_RETRY_ATTEMPTS } from "src/common/constants";
-import { SimpleBadRequestException } from "src/common/exceptions";
+import { ForbiddenRequestException, SimpleBadRequestException } from "src/common/exceptions";
 import { PresentationGenerator } from "src/common/utils/generators";
-import { EditBasicInfoPresentationDto } from "src/core/dtos";
-import { Presentation } from "src/core/entities";
+import { EditBasicInfoPresentationDto, PresentPresentationSlideDto } from "src/core/dtos";
+import { Presentation, PresentationSlide } from "src/core/entities";
 import { BaseService } from "src/core/services";
-import { FindOptionsOrder, Raw } from "typeorm";
+import { FindOptionsOrder, In, Raw } from "typeorm";
 import {
     PRESENTATION_REPO_TOKEN,
     PRESENTATION_SLIDE_REPO_TOKEN,
     PRESENTATION_VOTING_CODE_REPO_TOKEN,
     SLIDE_CHOICE_REPO_TOKEN,
+    SLIDE_VOTING_RESULT_REPO_TOKEN,
+    SlideVotingResultRepository,
 } from "../repositories";
 import {
     IPresentationRepository,
@@ -20,6 +22,7 @@ import {
     IPresentationVotingCodeRepository,
     ISlideChoiceRepository,
 } from "../repositories/interfaces";
+import { PresentPresentationActionEnum, PresentationPaceStateEnum } from "src/core/types";
 
 export const PRESENTATION_SERVICE_TOKEN = Symbol("PresentationService");
 
@@ -33,6 +36,8 @@ export class PresentationService extends BaseService<Presentation> {
         private readonly _presentationVotingCodeRepo: IPresentationVotingCodeRepository,
         @Inject(SLIDE_CHOICE_REPO_TOKEN)
         private readonly _slideChoiceRepo: ISlideChoiceRepository,
+        @Inject(SLIDE_VOTING_RESULT_REPO_TOKEN)
+        private readonly _slideVotingResultRepository: SlideVotingResultRepository,
     ) {
         super(_presentationRepository);
     }
@@ -245,5 +250,146 @@ export class PresentationService extends BaseService<Presentation> {
         } while (isDuplicateCode);
 
         return code;
+    }
+
+    /*
+    - check ownership of the given presentation
+    - 1. present action
+        - pace.state must be `idle`
+        - dto.slideId is not null
+        - dto.slideId is in presentation's slides
+    - 2. change_slide action
+        - pace.state must be `presenting`
+        - dto.slideId is not null
+        - dto.slideId is in presentation's slides
+    - 3. quit action
+        - pace.state must be `presenting`
+    */
+    private async _validatePresentSlideDataAndPrefetchPresentation(
+        userId: string,
+        presentationIdentifier: string | number,
+        presentSlideDto: PresentPresentationSlideDto,
+    ) {
+        const presentationIdentifierField = typeof presentationIdentifier === "number" ? "id" : "identifier";
+
+        // Check ownership of presentaiton
+        const presentation = await this._presentationRepository.findOnePresentation({
+            select: {
+                id: true,
+                pace: {
+                    active_slide_id: true,
+                    counter: true,
+                    mode: true,
+                    state: true,
+                },
+            },
+            where: {
+                ownerIdentifier: userId,
+                [presentationIdentifierField]: presentationIdentifier,
+            },
+        });
+        if (!presentation) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTATION_NOT_FOUND);
+        }
+
+        const paceState = presentation.pace.state;
+        const { slideId, action } = presentSlideDto;
+
+        if (action === PresentPresentationActionEnum.QUIT) {
+            if (paceState === PresentationPaceStateEnum.IDLE) {
+                throw new ForbiddenRequestException(RESPONSE_CODE.QUIT_SLIDE_PERMISSION);
+            }
+        } else {
+            // action: present, state: presenting => error
+            if (
+                action === PresentPresentationActionEnum.PRESENT &&
+                paceState === PresentationPaceStateEnum.PRESENTING
+            ) {
+                throw new ForbiddenRequestException(RESPONSE_CODE.PRESENT_SLIDE_PERMISSION);
+            }
+
+            // action: change_slide, state: idle => error
+            if (action === PresentPresentationActionEnum.CHANGE_SLIDE && paceState === PresentationPaceStateEnum.IDLE) {
+                throw new ForbiddenRequestException(RESPONSE_CODE.CHANGE_SLIDE_PERMISSION);
+            }
+
+            const safeSlideId = parseInt(slideId ? slideId.toString() : "0");
+            let slide: PresentationSlide | null = null;
+
+            if (slideId !== null && !Number.isNaN(safeSlideId) && safeSlideId > 0) {
+                // Find slide by slide id
+                slide = await this._presentationSlideRepository.findOnePresentationSlideAsync({
+                    where: {
+                        id: safeSlideId,
+                        presentationId: presentation.id, // faster than find by string (identifier)
+                    },
+                });
+            }
+
+            if (!slide) {
+                throw new SimpleBadRequestException(RESPONSE_CODE.SLIDE_NOT_FOUND);
+            }
+        }
+
+        return presentation;
+    }
+
+    async presentPresentationSlideAsync(
+        userId: string,
+        presentationIdentifier: string | number,
+        presentSlideDto: PresentPresentationSlideDto,
+    ) {
+        const { slideId, action } = presentSlideDto;
+        const safeSlideId = parseInt(slideId ? slideId.toString() : "0");
+
+        const presentation = await this._validatePresentSlideDataAndPrefetchPresentation(
+            userId,
+            presentationIdentifier,
+            presentSlideDto,
+        );
+
+        let ignoreUpdatePace = false;
+        const newPace = { ...presentation.pace };
+
+        if (action === PresentPresentationActionEnum.PRESENT) {
+            newPace.counter += 1;
+            newPace.state = PresentationPaceStateEnum.PRESENTING;
+            newPace.active_slide_id = safeSlideId;
+        } else if (action === PresentPresentationActionEnum.CHANGE_SLIDE) {
+            ignoreUpdatePace = newPace.active_slide_id === safeSlideId;
+            newPace.active_slide_id = safeSlideId;
+        } else if (action === PresentPresentationActionEnum.QUIT) {
+            newPace.state = PresentationPaceStateEnum.IDLE;
+        }
+
+        if (!ignoreUpdatePace) {
+            const dataToUpdate: Partial<Presentation> = { pace: newPace };
+            await this._presentationRepository.updateRecordByIdAsync(presentation.id, dataToUpdate);
+        }
+    }
+
+    async deleteOnePresentationAsync(userId: string, flexiblePresentationIdentifier: string | number) {
+        const presentation = await this.findOnePresentationAsync(userId, flexiblePresentationIdentifier);
+        if (presentation.pace.state === PresentationPaceStateEnum.PRESENTING) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTING_PRESENTATION);
+        }
+
+        const { id: presentationId, identifier: presentationIdentifier } = presentation;
+
+        const slides = await this._presentationSlideRepository.findManyPresentationSlidesAsync({
+            select: { id: true },
+            where: { presentationId },
+        });
+        const slideIds = slides.map((it) => it.id);
+
+        // firstly remove presentation to ensure that voting, slide and choices will be never accessed from outside
+        // remove presentation and voting codes
+        await this._presentationRepository.deleteRecordByIdAsync(presentationId);
+        await this._presentationVotingCodeRepo.deleteManyVotingCodesAsync({ presentationIdentifier });
+
+        // remove slides, choices and voting results
+        await this._presentationSlideRepository.deleteManyPresentationSlidesAsync({ presentationId });
+        await this._slideChoiceRepo.deleteManySlideChoicesAsync({ slideId: In(slideIds) });
+        await this._slideVotingResultRepository.deleteManySlideVotingResultsAsync({ slideId: In(slideIds) });
     }
 }

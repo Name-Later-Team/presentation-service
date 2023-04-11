@@ -1,6 +1,6 @@
 import { InjectDataSource } from "@nestjs/typeorm";
 import { PresentationVotingCode } from "src/core/entities";
-import { DataSource, FindManyOptions, FindOneOptions } from "typeorm";
+import { DataSource, FindManyOptions, FindOneOptions, FindOptionsWhere } from "typeorm";
 import { PresentationVotingCodeSchema } from "../database/schemas";
 import { GenericRepository } from "./generic.repository";
 import { IPresentationVotingCodeRepository } from "./interfaces";
@@ -21,5 +21,9 @@ export class PresentationVotingCodeRepository
 
     existsPresentationVotingCodeAsync(options: FindManyOptions<PresentationVotingCode>) {
         return this._repository.exist(options);
+    }
+
+    deleteManyVotingCodesAsync(options: FindOptionsWhere<PresentationVotingCode>) {
+        return this._repository.delete(options);
     }
 }

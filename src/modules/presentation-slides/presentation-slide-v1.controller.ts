@@ -1,8 +1,16 @@
-import { Body, Controller, Get, Inject, Param, Post, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Post, Put, Query, Req } from "@nestjs/common";
 import { Request } from "express";
-import { PRESENTATION_PACE_STATE, RESPONSE_CODE } from "src/common/constants";
+import { RESPONSE_CODE } from "src/common/constants";
 import { SimpleBadRequestException } from "src/common/exceptions";
-import { CreatePresentationSlideDto, FindOnePresentationSlideDto, PresentationIdentifierDto } from "src/core/dtos";
+import {
+    CreatePresentationSlideDto,
+    EditPresentationSlideDto,
+    FindOnePresentationSlideDto,
+    FindOnePresentationSlideQueryDto,
+    FindOnePresentatonSlideResponseDto,
+    GetVotingResultsResponseDto,
+    PresentationIdentifierDto,
+} from "src/core/dtos";
 import { CreatedResponse, DataResponse } from "src/core/response";
 import {
     PRESENTATION_SERVICE_TOKEN,
@@ -12,9 +20,12 @@ import {
 } from "src/infrastructure/services";
 import {
     CreatePresentationSlideValidationPipe,
+    EditPresentationSlideValidationPipe,
+    FindOnePresentationSlideQueryValidationPipe,
     FindOnePresentationSlideValidationPipe,
     PresentationIdentifierValidationPipe,
 } from "./pipes";
+import { PresentationPaceStateEnum } from "src/core/types";
 
 @Controller("v1/presentations/:presentationIdentifier/slides")
 export class PresentationSlideControllerV1 {
@@ -36,7 +47,7 @@ export class PresentationSlideControllerV1 {
         const presentation = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier);
 
         // The presentation is presenting
-        if (presentation.pace.state === PRESENTATION_PACE_STATE.PRESENTING) {
+        if (presentation.pace.state === PresentationPaceStateEnum.PRESENTING) {
             throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTING_PRESENTATION);
         }
 
@@ -48,16 +59,23 @@ export class PresentationSlideControllerV1 {
     async findOnePresentationSlideAsync(
         @Req() request: Request,
         @Param(new FindOnePresentationSlideValidationPipe()) pathParams: FindOnePresentationSlideDto,
+        @Query(new FindOnePresentationSlideQueryValidationPipe()) query: FindOnePresentationSlideQueryDto,
     ) {
         const userId = request.userinfo.identifier;
         const { presentationIdentifier, slideId } = pathParams;
+        const includeResults = query.includeResults;
 
         // check existence of the given presentation and throw an error if it doesn't exist
         await this._presentationService.existsByIdentifierAsync(userId, presentationIdentifier, true);
 
         const slide = await this._presentationSlideService.findOnePresentationSlideAsync(slideId);
+        const respData: FindOnePresentatonSlideResponseDto = { ...slide };
+        if (includeResults) {
+            const votingResults = await this._presentationSlideService.getVotingResultsBySlideIdAsync(slideId);
+            respData.votingResult = votingResults;
+        }
 
-        return new DataResponse(slide);
+        return new DataResponse(respData);
     }
 
     @Get("/:slideId/results")
@@ -78,6 +96,49 @@ export class PresentationSlideControllerV1 {
         );
 
         const votingResults = await this._presentationSlideService.getVotingResultsBySlideIdAsync(slideId);
-        return new DataResponse({ ...votingResults, slideId });
+        const respData: GetVotingResultsResponseDto = { ...votingResults, slideId };
+        return new DataResponse(respData);
+    }
+
+    @Put("/:slideId")
+    async editSlideByIdAsync(
+        @Req() request: Request,
+        @Param(new FindOnePresentationSlideValidationPipe()) pathParams: FindOnePresentationSlideDto,
+        @Body(new EditPresentationSlideValidationPipe()) editPresentationSlideDto: EditPresentationSlideDto,
+    ) {
+        const userId = request.userinfo.identifier;
+        const { presentationIdentifier, slideId } = pathParams;
+
+        await this._presentationSlideService.editSlideAsync(
+            userId,
+            presentationIdentifier,
+            slideId,
+            editPresentationSlideDto,
+        );
+        const updatedSlide = await this._presentationSlideService.findOnePresentationSlideAsync(slideId);
+        return new DataResponse(updatedSlide);
+    }
+    @Delete("/:slideId")
+    async deleteSlideAsync(
+        @Req() request: Request,
+        @Param(new FindOnePresentationSlideValidationPipe()) pathParams: FindOnePresentationSlideDto,
+    ) {
+        const userId = request.userinfo.identifier;
+        const { presentationIdentifier, slideId } = pathParams;
+
+        // check existence of the given presentation and throw an error if it doesn't exist
+        const presentation = await this._presentationService.findOnePresentationAsync(
+            userId,
+            presentationIdentifier,
+            true,
+        );
+        if (presentation.pace.state === PresentationPaceStateEnum.PRESENTING) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTING_PRESENTATION);
+        }
+        if (presentation.totalSlides === 1) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.DELETE_ONLY_SLIDE);
+        }
+        await this._presentationSlideService.deleteOnePresentationSlideAsync(presentation, slideId);
+        return new DataResponse(null);
     }
 }
