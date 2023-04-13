@@ -175,6 +175,12 @@ export class PresentationService extends BaseService<Presentation> {
         }
 
         const { name, closedForVoting, slides } = editInfo;
+
+        // The number of given slides must be equal to the number of slides of given presentation
+        if (slides !== undefined && slides.length !== presentation.totalSlides) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.NO_MATCH_SLIDE_LIST);
+        }
+
         if (name !== undefined || closedForVoting !== undefined) {
             await this._presentationRepository.updateRecordByIdAsync(presentation.id, { name, closedForVoting });
         }
@@ -183,8 +189,9 @@ export class PresentationService extends BaseService<Presentation> {
             const slideIds = slides.map((it) => it.id);
             const whenStatements = slides.map((it) => `WHEN ${it.id} THEN ${it.position}`);
 
-            // WHERE statement to avoid the default case, reduce number of assignments
-            // The default case returns NULL value
+            // WHERE statement to avoid the default case, reduce number of assignments.
+            // The default case returns NULL value.
+            // Filter by presentation_id to ensure that only update slides belongs to that presentation.
             const sql = `
                 UPDATE "presentation_slides"
                 SET position = (
@@ -192,7 +199,7 @@ export class PresentationService extends BaseService<Presentation> {
                         ${whenStatements.join("\n\t\t\t")}
                     END
                 )
-                WHERE id IN (${slideIds.join(",")});
+                WHERE presentation_id = ${presentation.id} AND id IN (${slideIds.join(",")});
             `;
             Logger.debug(`update slide position\n${sql}`, "SQL QUERY");
 

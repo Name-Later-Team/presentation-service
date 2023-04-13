@@ -372,7 +372,6 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         //Update Slides pos
         if (safeSlidePos !== currentTotalSlids - 1) {
             const sqlUpdateSlidePosition = `
-
             UPDATE "presentation_slides" 
             SET position=position-1
             WHERE presentation_id = ${safePresentationId} AND position>${safeSlidePos}
