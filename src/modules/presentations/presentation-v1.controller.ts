@@ -5,7 +5,7 @@ import { RESPONSE_CODE } from "src/common/constants";
 import { SimpleBadRequestException } from "src/common/exceptions";
 import {
     CreatePresentationDto,
-    EditBasicInfoPresentationDto,
+    EditPresentationDto,
     FindAllPresentationsDto,
     FindOnePresentationDto,
     PresentPresentationSlideDto,
@@ -14,7 +14,7 @@ import { CreatedResponse, DataResponse, UpdateResponse } from "src/core/response
 import { PRESENTATION_SERVICE_TOKEN, PresentationService } from "src/infrastructure/services";
 import {
     CreatePresentationValidationPipe,
-    EditBasicInfoPresentationValidationPipe,
+    EditPresentationValidationPipe,
     FindAllPresentationsValidationPipe,
     FindOnePresentationValidationPipe,
     PresentPresentationSlideValidationPipe,
@@ -70,20 +70,15 @@ export class PresentationControllerV1 {
     }
 
     @Put("/:identifier")
-    async editBasicInfoPresentationAsync(
+    async editPresentationAsync(
         @Req() request: Request,
         @Param(new FindOnePresentationValidationPipe()) params: FindOnePresentationDto,
-        @Body(new EditBasicInfoPresentationValidationPipe())
-        editBasicInfoPresentationDto: EditBasicInfoPresentationDto,
+        @Body(new EditPresentationValidationPipe()) editPresentationDto: EditPresentationDto,
     ) {
-        const presentationId = params.identifier;
         const userId = request.userinfo.identifier;
+        const presentationIdentifier = params.identifier;
 
-        await this._presentationService.editBasicInfoPresentationeAsync(
-            userId,
-            presentationId,
-            editBasicInfoPresentationDto,
-        );
+        await this._presentationService.editPresentationeAsync(userId, presentationIdentifier, editPresentationDto);
         return new UpdateResponse();
     }
 
