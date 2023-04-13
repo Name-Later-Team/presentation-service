@@ -355,6 +355,10 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
                 },
             });
 
+            if (!activeSlide) {
+                throw new Error("Cannot find a slide to replace");
+            }
+
             presentationDataToUpdate = {
                 totalSlides: currentTotalSlids - 1,
                 pace: {

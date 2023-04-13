@@ -4,7 +4,7 @@ import * as moment from "moment";
 import { PAGINATION, RESPONSE_CODE, VOTING_CODE_GENERATION_RETRY_ATTEMPTS } from "src/common/constants";
 import { ForbiddenRequestException, SimpleBadRequestException } from "src/common/exceptions";
 import { PresentationGenerator } from "src/common/utils/generators";
-import { EditBasicInfoPresentationDto, PresentPresentationSlideDto } from "src/core/dtos";
+import { EditPresentationDto, PresentPresentationSlideDto } from "src/core/dtos";
 import { Presentation, PresentationSlide } from "src/core/entities";
 import { BaseService } from "src/core/services";
 import { FindOptionsOrder, In, Raw } from "typeorm";
@@ -156,13 +156,14 @@ export class PresentationService extends BaseService<Presentation> {
         return { ...presentation, slides };
     }
 
-    async editBasicInfoPresentationeAsync(
+    async editPresentationeAsync(
         userId: string,
         presentationIdentifier: number | string,
-        editInfo: EditBasicInfoPresentationDto,
+        editInfo: EditPresentationDto,
     ) {
         const presentationIdentifierField = typeof presentationIdentifier === "number" ? "id" : "identifier";
         const presentation = await this._presentationRepository.findOnePresentation({
+            select: { id: true, totalSlides: true },
             where: {
                 [presentationIdentifierField]: presentationIdentifier,
                 ownerIdentifier: userId,
@@ -172,10 +173,31 @@ export class PresentationService extends BaseService<Presentation> {
         if (presentation === null) {
             throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTATION_NOT_FOUND, "Presentation not found");
         }
-        await this._presentationRepository.updateRecordByIdAsync(presentation.id, {
-            name: editInfo.name,
-            closedForVoting: editInfo.closedForVoting,
-        });
+
+        const { name, closedForVoting, slides } = editInfo;
+        if (name !== undefined || closedForVoting !== undefined) {
+            await this._presentationRepository.updateRecordByIdAsync(presentation.id, { name, closedForVoting });
+        }
+
+        if (slides !== undefined) {
+            const slideIds = slides.map((it) => it.id);
+            const whenStatements = slides.map((it) => `WHEN ${it.id} THEN ${it.position}`);
+
+            // WHERE statement to avoid the default case, reduce number of assignments
+            // The default case returns NULL value
+            const sql = `
+                UPDATE "presentation_slides"
+                SET position = (
+                    CASE id
+                        ${whenStatements.join("\n\t\t\t")}
+                    END
+                )
+                WHERE id IN (${slideIds.join(",")});
+            `;
+            Logger.debug(`update slide position\n${sql}`, "SQL QUERY");
+
+            await this._presentationSlideRepository.executeRawQueryAsync(sql);
+        }
     }
 
     async existsByIdentifierAsync(userId: string, presentationIdentifier: string | number, isThrowError = false) {

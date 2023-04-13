@@ -16,9 +16,10 @@ export interface FindOnePresentationDto {
     identifier: number | string;
 }
 
-export interface EditBasicInfoPresentationDto {
-    closedForVoting: boolean;
-    name: string;
+export interface EditPresentationDto {
+    name?: string;
+    closedForVoting?: boolean;
+    slides?: Array<{ id: number; position: number }>;
 }
 
 export interface PresentPresentationSlideDto {
