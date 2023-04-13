@@ -176,9 +176,20 @@ export class PresentationService extends BaseService<Presentation> {
 
         const { name, closedForVoting, slides } = editInfo;
 
-        // The number of given slides must be equal to the number of slides of given presentation
-        if (slides !== undefined && slides.length !== presentation.totalSlides) {
-            throw new SimpleBadRequestException(RESPONSE_CODE.NO_MATCH_SLIDE_LIST);
+        if (slides !== undefined) {
+            // The number of given slides must be equal to the number of slides of given presentation
+            if (slides.length !== presentation.totalSlides) {
+                throw new SimpleBadRequestException(RESPONSE_CODE.NO_MATCH_SLIDE_LIST);
+            }
+
+            const slideIds = slides.map((it) => it.id);
+            const count = await this._presentationSlideRepository.countPresentationSlidesAsync({
+                presentationId: presentation.id,
+                id: In(slideIds),
+            });
+            if (count !== presentation.totalSlides) {
+                throw new SimpleBadRequestException(RESPONSE_CODE.NO_MATCH_SLIDE_LIST);
+            }
         }
 
         if (name !== undefined || closedForVoting !== undefined) {
