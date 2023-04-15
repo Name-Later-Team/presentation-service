@@ -141,7 +141,7 @@ export class PresentationControllerV1 {
         await this._presentationService.deleteOnePresentationAsync(userId, presentationIdentifier);
     }
 
-    @Post("/:identifier/reset-results")
+    @Post("/:identifier/results/reset")
     @HttpCode(204)
     async resetResultsOfAllSlidesAsync(
         @Req() request: Request,
