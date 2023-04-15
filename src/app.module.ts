@@ -5,9 +5,10 @@ import { RawBodyMiddleware, RsaAuthMiddleware, trackingMiddleware } from "./comm
 import { DatabaseModule } from "./infrastructure/database";
 import { PresentationSlideModule } from "./modules/presentation-slides/presentation-slide.module";
 import { PresentationModule } from "./modules/presentations/presentation.module";
+import { AudienceModule } from "./modules/audience/audience.module";
 
 @Module({
-    imports: [DatabaseModule, PresentationModule, PresentationSlideModule],
+    imports: [DatabaseModule, PresentationModule, PresentationSlideModule, AudienceModule],
     controllers: [AppController],
     providers: [AppService, Logger],
 })
