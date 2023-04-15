@@ -12,9 +12,9 @@ const voteOnPresentationSlideValidationSchema = Joi.object<AudienceVoteOnPresent
     choiceIds: Joi.array()
         .items(
             Joi.number().integer().greater(0).messages({
-                "number.base": "Mã định danh câu hỏi không hợp lệ",
-                "number.greater": "Mã định danh câu hỏi không hợp lệ",
-                "number.infinity": "Mã định danh câu hỏi không hợp lệ",
+                "number.base": "Mã định danh câu trả lời không hợp lệ",
+                "number.greater": "Mã định danh câu trả lời không hợp lệ",
+                "number.infinity": "Mã định danh câu trả lời không hợp lệ",
             }),
         )
         .min(1)
