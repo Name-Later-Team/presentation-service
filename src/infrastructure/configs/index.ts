@@ -30,3 +30,14 @@ export const DATABASE_CONFIG = {
     dbName: process.env.DB_NAME || "",
     migrationsPath: process.env.DB_MIGRATION_PATH || "",
 } as const;
+
+export const MESSAGE_BROKER_CONFIG = {
+    rabbitmq: {
+        uri: process.env.RABBITMQ_URI || "",
+        exchange: {
+            name: process.env.RABBITMQ_EXCHANGE_NAME || "",
+            type: process.env.RABBITMQ_EXCHANGE_TYPE || "",
+            isDurable: Boolean(process.env.RABBITMQ_EXCHANGE_DURABLE).valueOf() || true,
+        },
+    },
+};
