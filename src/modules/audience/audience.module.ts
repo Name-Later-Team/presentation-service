@@ -1,5 +1,4 @@
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
-import { basicAuthMiddleware } from "src/common/middlewares";
 import { ServiceModule } from "src/infrastructure/services";
 import { AudienceControllerV1 } from "./audience-v1.controller";
 
@@ -8,7 +7,5 @@ import { AudienceControllerV1 } from "./audience-v1.controller";
     imports: [ServiceModule],
 })
 export class AudienceModule implements NestModule {
-    configure(consumer: MiddlewareConsumer) {
-        consumer.apply(basicAuthMiddleware).forRoutes(AudienceControllerV1);
-    }
+    configure(consumer: MiddlewareConsumer) {}
 }
