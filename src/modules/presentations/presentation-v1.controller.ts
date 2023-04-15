@@ -140,4 +140,19 @@ export class PresentationControllerV1 {
 
         await this._presentationService.deleteOnePresentationAsync(userId, presentationIdentifier);
     }
+
+    @Post("/:identifier/results/reset")
+    @HttpCode(204)
+    async resetResultsOfAllSlidesAsync(
+        @Req() request: Request,
+        @Param(new FindOnePresentationValidationPipe()) params: FindOnePresentationDto,
+    ) {
+        const userId = request.userinfo.identifier;
+        const presentationIdentifier = params.identifier;
+
+        // throw error if presentation is not found
+        const presentation = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier);
+
+        await this._presentationService.resetResultsOfAllSlidesAsync(presentation.id);
+    }
 }

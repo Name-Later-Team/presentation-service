@@ -392,7 +392,6 @@ export class PresentationService extends BaseService<Presentation> {
         const newPace = { ...presentation.pace };
 
         if (action === PresentPresentationActionEnum.PRESENT) {
-            newPace.counter += 1;
             newPace.state = PresentationPaceStateEnum.PRESENTING;
             newPace.active_slide_id = safeSlideId;
         } else if (action === PresentPresentationActionEnum.CHANGE_SLIDE) {
@@ -431,5 +430,14 @@ export class PresentationService extends BaseService<Presentation> {
         await this._presentationSlideRepository.deleteManyPresentationSlidesAsync({ presentationId });
         await this._slideChoiceRepo.deleteManySlideChoicesAsync({ slideId: In(slideIds) });
         await this._slideVotingResultRepository.deleteManySlideVotingResultsAsync({ slideId: In(slideIds) });
+    }
+
+    async resetResultsOfAllSlidesAsync(presentationId: number) {
+        const sql = `
+        UPDATE "presentation_slides"
+        SET session_no = session_no + 1
+        WHERE presentation_id = ${presentationId};
+        `;
+        await this._presentationSlideRepository.executeRawQueryAsync(sql);
     }
 }

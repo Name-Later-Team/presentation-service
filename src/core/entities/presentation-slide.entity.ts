@@ -18,4 +18,5 @@ export class PresentationSlide extends IdentifierTimeTrackingEntityPart {
     extrasConfig: string | null;
     position: number;
     textSize: number;
+    sessionNo: number;
 }
