@@ -1,7 +1,7 @@
-import { Controller, Get, Inject, Param, Req } from "@nestjs/common";
+import { Controller, Get, Inject, Param } from "@nestjs/common";
 import { AUDIENCE_SERVICE_TOKEN, AudienceService } from "src/infrastructure/services";
-import { FindOnePresentationByCodeValidationPipe } from "./pipes";
-import { FindOnePresentationByCodeDto } from "src/core/dtos";
+import { FindOnePresentationByCodeValidationPipe, FindOnePresentationSlideValidationPipe } from "./pipes";
+import { AudienceFindOnePresentationByCodeDto, AudienceFindOnePresentationSlideDto } from "src/core/dtos";
 import { SimpleBadRequestException } from "src/common/exceptions";
 import { RESPONSE_CODE } from "src/common/constants";
 import { DataResponse } from "src/core/response";
@@ -11,9 +11,9 @@ export class AudienceControllerV1 {
     constructor(@Inject(AUDIENCE_SERVICE_TOKEN) private readonly _audienceService: AudienceService) {}
 
     @Get("/votingCodes/:code/presentation")
-    async findOnePresentationByCode(
+    async findOnePresentationByCodeAsync(
         @Param(new FindOnePresentationByCodeValidationPipe())
-        params: FindOnePresentationByCodeDto,
+        params: AudienceFindOnePresentationByCodeDto,
     ) {
         const userVotingCode = params.code;
         const actualVotingCode = await this._audienceService.findOnePresentationVotingCodeByVotingCodeAsync(
@@ -28,5 +28,15 @@ export class AudienceControllerV1 {
             actualVotingCode.presentationIdentifier,
         );
         return new DataResponse(presentation);
+    }
+
+    @Get("/presentations/:presentationIdentifier/slides/:slideId")
+    async findOnePresentationSlideByIdAsync(
+        @Param(new FindOnePresentationSlideValidationPipe())
+        params: AudienceFindOnePresentationSlideDto,
+    ) {
+        const { presentationIdentifier, slideId } = params;
+        const slide = await this._audienceService.findOnePresentationSlideById(presentationIdentifier, slideId);
+        return new DataResponse(slide);
     }
 }

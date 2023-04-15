@@ -1,13 +1,13 @@
 import { ArgumentMetadata, Injectable, PipeTransform } from "@nestjs/common";
 import * as Joi from "joi";
 import { RequestValidationException } from "src/common/exceptions";
-import { FindOnePresentationByCodeDto } from "src/core/dtos";
+import { AudienceFindOnePresentationByCodeDto } from "src/core/dtos";
 
-const findOnePresentationByCodeValidationSchema = Joi.object<FindOnePresentationByCodeDto>({
+const findOnePresentationByCodeValidationSchema = Joi.object<AudienceFindOnePresentationByCodeDto>({
     code: Joi.string().required().messages({
-        "any.required": "Mã định danh bài trình bày là bắt buộc",
-        "string.base": "Mã định danh bài trình bày không hợp lệ",
-        "string.empty": "Mã định danh bài trình bày không hợp lệ",
+        "any.required": "Mã tham gia bài trình bày là bắt buộc",
+        "string.base": "Mã tham gia bài trình bày không hợp lệ",
+        "string.empty": "Mã tham gia bài trình bày không hợp lệ",
     }),
 }).options({
     allowUnknown: true,
@@ -15,8 +15,10 @@ const findOnePresentationByCodeValidationSchema = Joi.object<FindOnePresentation
 });
 
 @Injectable()
-export class FindOnePresentationByCodeValidationPipe implements PipeTransform<any, FindOnePresentationByCodeDto> {
-    transform(query: any, metadata: ArgumentMetadata): FindOnePresentationByCodeDto {
+export class FindOnePresentationByCodeValidationPipe
+    implements PipeTransform<any, AudienceFindOnePresentationByCodeDto>
+{
+    transform(query: any, metadata: ArgumentMetadata): AudienceFindOnePresentationByCodeDto {
         const result = findOnePresentationByCodeValidationSchema.validate(query, { convert: true });
         if (result.error) {
             const {
