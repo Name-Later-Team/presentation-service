@@ -2,12 +2,13 @@ import { BeforeApplicationShutdown, Logger, MiddlewareConsumer, Module, NestModu
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { RawBodyMiddleware, RsaAuthMiddleware, trackingMiddleware } from "./common/middlewares";
+import { BrokerModule } from "./infrastructure/brokers";
 import { DatabaseModule } from "./infrastructure/database";
 import { PresentationSlideModule } from "./modules/presentation-slides/presentation-slide.module";
 import { PresentationModule } from "./modules/presentations/presentation.module";
 
 @Module({
-    imports: [DatabaseModule, PresentationModule, PresentationSlideModule],
+    imports: [DatabaseModule, BrokerModule, PresentationModule, PresentationSlideModule],
     controllers: [AppController],
     providers: [AppService, Logger],
 })
