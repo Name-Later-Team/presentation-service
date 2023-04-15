@@ -27,4 +27,8 @@ export class SlideVotingResultRepository
     deleteManySlideVotingResultsAsync(options: FindOptionsWhere<SlideVotingResult>) {
         return this._repository.delete(options);
     }
+
+    createMultipleVotingResultsAsync(entities: Array<Partial<SlideVotingResult>>) {
+        return this._repository.insert(entities);
+    }
 }

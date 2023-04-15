@@ -223,7 +223,7 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
             const choiceIds = editSlideDto.choices.map((it) => it.id);
             removedChoicesCount = await this._slideChoiceRepository.countSlideChoicesAsync({
                 slideId,
-                id: choiceIds.length > 0 ? In(choiceIds) : undefined,
+                id: choiceIds.length > 0 ? Not(In(choiceIds)) : undefined,
             });
         }
 

@@ -1,7 +1,15 @@
-import { Controller, Get, Inject, Param } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Inject, Param, Post } from "@nestjs/common";
 import { AUDIENCE_SERVICE_TOKEN, AudienceService } from "src/infrastructure/services";
-import { FindOnePresentationByCodeValidationPipe, FindOnePresentationSlideValidationPipe } from "./pipes";
-import { AudienceFindOnePresentationByCodeDto, AudienceFindOnePresentationSlideDto } from "src/core/dtos";
+import {
+    FindOnePresentationByCodeValidationPipe,
+    FindOnePresentationSlideValidationPipe,
+    VoteOnPresentationSlideValidationPipe,
+} from "./pipes";
+import {
+    AudienceFindOnePresentationByCodeDto,
+    AudienceFindOnePresentationSlideDto,
+    AudienceVoteOnPresentationSlideDto,
+} from "src/core/dtos";
 import { SimpleBadRequestException } from "src/common/exceptions";
 import { RESPONSE_CODE } from "src/common/constants";
 import { DataResponse } from "src/core/response";
@@ -38,5 +46,16 @@ export class AudienceControllerV1 {
         const { presentationIdentifier, slideId } = params;
         const slide = await this._audienceService.findOnePresentationSlideById(presentationIdentifier, slideId);
         return new DataResponse(slide);
+    }
+
+    @Post("/presentations/:presentationIdentifier/slides/:slideId/vote")
+    @HttpCode(204)
+    async voteOnPresentationSlideAsync(
+        @Param(new FindOnePresentationSlideValidationPipe()) params: AudienceFindOnePresentationSlideDto,
+        @Body(new VoteOnPresentationSlideValidationPipe()) body: AudienceVoteOnPresentationSlideDto,
+    ) {
+        const { presentationIdentifier, slideId } = params;
+        const { userId, choiceIds } = body;
+        await this._audienceService.voteOnPresentationSlideAsync(userId, presentationIdentifier, slideId, choiceIds);
     }
 }
