@@ -6,4 +6,5 @@ export interface ISlideChoiceRepository extends IGenericRepository<SlideChoice> 
     saveManyRecordAsync(entityList: Partial<SlideChoice>[]): Promise<any>;
     findManySlideChoicesAsync(options: FindManyOptions<SlideChoice>): Promise<SlideChoice[]>;
     deleteManySlideChoicesAsync(options: FindOptionsWhere<SlideChoice>): Promise<DeleteResult>;
+    countSlideChoicesAsync(where: FindOptionsWhere<SlideChoice> | FindOptionsWhere<SlideChoice>[]): Promise<number>;
 }

@@ -32,4 +32,8 @@ export class SlideChoiceRepository extends GenericRepository<SlideChoice> implem
     deleteManySlideChoicesAsync(options: FindOptionsWhere<SlideChoice>) {
         return this._repository.delete(options);
     }
+
+    countSlideChoicesAsync(where: FindOptionsWhere<SlideChoice> | FindOptionsWhere<SlideChoice>[]) {
+        return this._repository.countBy(where);
+    }
 }
