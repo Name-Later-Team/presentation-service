@@ -64,10 +64,12 @@ export class PresentationSlideControllerV1 {
         const { presentationIdentifier, slideId } = pathParams;
         const includeResults = query.includeResults;
 
-        // check existence of the given presentation and throw an error if it doesn't exist
-        await this._presentationService.existsByIdentifierAsync(userId, presentationIdentifier, true);
+        const presentation = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier);
+        const slide = await this._presentationSlideService.findOnePresentationSlideByPresentationIdAndSlideIdAsync(
+            slideId,
+            presentation.id,
+        );
 
-        const slide = await this._presentationSlideService.findOnePresentationSlideAsync(slideId);
         const respData: FindOnePresentatonSlideResponseDto = { ...slide };
 
         if (includeResults) {
@@ -89,15 +91,12 @@ export class PresentationSlideControllerV1 {
         const userId = request.userinfo.identifier;
         const { presentationIdentifier, slideId } = pathParams;
 
-        // check existence of the given presentation
-        // throw an error if one of them don't exist
-        await this._presentationService.existsByIdentifierAsync(userId, presentationIdentifier, true);
-
-        const slide = await this._presentationSlideService.findOnePresentationSlideAsync(slideId, false);
-        if (!slide) {
-            throw new SimpleBadRequestException(RESPONSE_CODE.SLIDE_NOT_FOUND);
-        }
-
+        const presentation = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier);
+        const slide = await this._presentationSlideService.findOnePresentationSlideByPresentationIdAndSlideIdAsync(
+            slideId,
+            presentation.id,
+            false,
+        );
         const votingResults = await this._presentationSlideService.getVotingResultsBySlideIdAsync(
             slideId,
             slide.sessionNo,
@@ -121,7 +120,7 @@ export class PresentationSlideControllerV1 {
             slideId,
             editPresentationSlideDto,
         );
-        const updatedSlide = await this._presentationSlideService.findOnePresentationSlideAsync(slideId);
+        const updatedSlide = await this._presentationSlideService.findOnePresentationSlideBySlideIdAsync(slideId);
         return new DataResponse(updatedSlide);
     }
 
@@ -134,17 +133,7 @@ export class PresentationSlideControllerV1 {
         const { presentationIdentifier, slideId } = pathParams;
 
         // check existence of the given presentation and throw an error if it doesn't exist
-        const presentation = await this._presentationService.findOnePresentationAsync(
-            userId,
-            presentationIdentifier,
-            true,
-        );
-        if (presentation.pace.state === PresentationPaceStateEnum.PRESENTING) {
-            throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTING_PRESENTATION);
-        }
-        if (presentation.totalSlides === 1) {
-            throw new SimpleBadRequestException(RESPONSE_CODE.DELETE_ONLY_SLIDE);
-        }
+        const presentation = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier);
         await this._presentationSlideService.deleteOnePresentationSlideAsync(presentation, slideId);
         return new DataResponse(null);
     }
@@ -158,12 +147,12 @@ export class PresentationSlideControllerV1 {
         const userId = request.userinfo.identifier;
         const { presentationIdentifier, slideId } = pathParams;
 
-        await this._presentationService.existsByIdentifierAsync(userId, presentationIdentifier, true);
-
-        const slide = await this._presentationSlideService.findOnePresentationSlideAsync(slideId, false);
-        if (!slide) {
-            throw new SimpleBadRequestException(RESPONSE_CODE.SLIDE_NOT_FOUND);
-        }
+        const presentation = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier);
+        const slide = await this._presentationSlideService.findOnePresentationSlideByPresentationIdAndSlideIdAsync(
+            slideId,
+            presentation.id,
+            false,
+        );
 
         await this._presentationSlideService.updateRecordByIdAsync(slideId, { sessionNo: slide.sessionNo + 1 });
     }
