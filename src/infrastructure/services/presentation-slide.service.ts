@@ -170,9 +170,9 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         `;
 
         const sqlRespondents = `
-        SELECT COUNT(DISTINCT "user_identifier") AS "respondents"
-        FROM "slide_voting_results"
-        WHERE ${whereBySessionNo} slide_id = ${safeSlideId};
+        SELECT COUNT(DISTINCT svr.user_identifier) AS "respondents"
+        FROM "slide_voting_results" as svr
+        WHERE ${whereBySessionNo} svr.slide_id = ${safeSlideId};
         `;
 
         // { id: number, label: string, score: string }[]
