@@ -7,7 +7,7 @@ import { PresentationGenerator } from "src/common/utils/generators";
 import { EditPresentationSlideDto } from "src/core/dtos";
 import { Presentation, PresentationSlide, SlideChoice } from "src/core/entities";
 import { BaseService } from "src/core/services";
-import { In, Not } from "typeorm";
+import { FindOneOptions, In, Not } from "typeorm";
 import {
     PRESENTATION_REPO_TOKEN,
     PRESENTATION_SLIDE_REPO_TOKEN,
@@ -83,13 +83,13 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         return createdSlide;
     }
 
-    async findOnePresentationSlideAsync(slideId: number, includeChoices = true) {
-        const slide = await this._presentationSlideRepository.getRecordByIdAsync(slideId);
+    private async _findOnePresentationSlideAsync(options: FindOneOptions, isIncludeChoices = true) {
+        const slide = await this._presentationSlideRepository.findOnePresentationSlideAsync(options);
         if (!slide) {
             throw new SimpleBadRequestException(RESPONSE_CODE.SLIDE_NOT_FOUND);
         }
 
-        if (includeChoices) {
+        if (isIncludeChoices) {
             const choices = await this._slideChoiceRepository.findManySlideChoicesAsync({
                 select: {
                     id: true,
@@ -99,7 +99,7 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
                     isCorrectAnswer: true,
                     metadata: true,
                 },
-                where: { slideId },
+                where: { slideId: slide.id },
                 order: { position: "ASC" },
             });
 
@@ -107,6 +107,26 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         }
 
         return slide;
+    }
+
+    findOnePresentationSlideBySlideIdAsync(slideId: number, isIncludeChoices = true) {
+        return this._findOnePresentationSlideAsync({ where: { id: slideId } }, isIncludeChoices);
+    }
+
+    findOnePresentationSlideByPresentationIdAndSlideIdAsync(
+        slideId: number,
+        presentationId: number,
+        isIncludeChoices = true,
+    ) {
+        return this._findOnePresentationSlideAsync(
+            {
+                where: {
+                    id: slideId,
+                    presentationId,
+                },
+            },
+            isIncludeChoices,
+        );
     }
 
     async existsByPresentationIdentifierAndSlideIdAsync(
@@ -334,17 +354,21 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
     }
 
     async deleteOnePresentationSlideAsync(presentation: Presentation, slideId: number) {
+        const { id: presentationId, totalSlides: currentTotalSlides, pace: currentPace } = presentation;
+        if (currentPace.state === PresentationPaceStateEnum.PRESENTING) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTING_PRESENTATION);
+        } else if (currentTotalSlides === 1) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.DELETE_ONLY_SLIDE);
+        }
+
         const safeSlideId = parseInt(slideId.toString());
         if (Number.isNaN(safeSlideId) || safeSlideId < 1) {
             throw new Error("slideId must be an integer number and greater than zero");
         }
-        const slide = await this._presentationSlideRepository.getRecordByIdAsync(safeSlideId);
-        const { id: presentationId, totalSlides: currentTotalSlids, pace: currentPace } = presentation;
+        const slide = await this._presentationSlideRepository.findOnePresentationSlideAsync({
+            where: { id: slideId, presentationId },
+        });
         if (!slide) {
-            throw new SimpleBadRequestException(RESPONSE_CODE.SLIDE_NOT_FOUND);
-        }
-
-        if (slide.presentationId !== presentationId) {
             throw new SimpleBadRequestException(RESPONSE_CODE.SLIDE_NOT_FOUND);
         }
 
@@ -359,13 +383,13 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
 
         //Update Presentation totalSlide and pace
         let presentationDataToUpdate: Partial<Presentation> = {
-            totalSlides: currentTotalSlids - 1,
+            totalSlides: currentTotalSlides - 1,
         };
         if (currentPace.active_slide_id === safeSlideId) {
             const activeSlide = await this._presentationSlideRepository.findOnePresentationSlideAsync({
                 where: {
                     presentationId: safePresentationId,
-                    position: safeSlidePos !== currentTotalSlids - 1 ? safeSlidePos + 1 : safeSlidePos - 1,
+                    position: safeSlidePos !== currentTotalSlides - 1 ? safeSlidePos + 1 : safeSlidePos - 1,
                 },
             });
 
@@ -374,7 +398,7 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
             }
 
             presentationDataToUpdate = {
-                totalSlides: currentTotalSlids - 1,
+                totalSlides: currentTotalSlides - 1,
                 pace: {
                     ...currentPace,
                     active_slide_id: activeSlide.id,
@@ -384,7 +408,7 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         await this._presentationRepository.updateRecordByIdAsync(presentationId, presentationDataToUpdate);
 
         //Update Slides pos
-        if (safeSlidePos !== currentTotalSlids - 1) {
+        if (safeSlidePos !== currentTotalSlides - 1) {
             const sqlUpdateSlidePosition = `
             UPDATE "presentation_slides" 
             SET position = position - 1
