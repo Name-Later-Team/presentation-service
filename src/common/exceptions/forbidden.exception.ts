@@ -8,6 +8,6 @@ export class ForbiddenRequestException extends BaseException {
      * @param message Client readable message
      */
     constructor(responseCode: number, message = "Forbidden") {
-        super(HTTP_CODE.BAD_REQUEST, message, responseCode);
+        super(HTTP_CODE.FORBIDDEN, message, responseCode);
     }
 }

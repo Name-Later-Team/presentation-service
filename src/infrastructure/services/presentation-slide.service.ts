@@ -215,8 +215,20 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
             throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTING_PRESENTATION);
         }
 
-        // Cannot change slide type if it has voted
-        if (slide.slideType !== editSlideDto.slideType) {
+        const hasChangeSlideType = slide.slideType !== editSlideDto.slideType;
+        let removedChoicesCount = 0;
+
+        // Optimization: don't execute query if slide type will be changed
+        if (!hasChangeSlideType) {
+            const choiceIds = editSlideDto.choices.map((it) => it.id);
+            removedChoicesCount = await this._slideChoiceRepository.countSlideChoicesAsync({
+                slideId,
+                id: choiceIds.length > 0 ? Not(In(choiceIds)) : undefined,
+            });
+        }
+
+        // Cannot change slide type or remove any choices if it has voted
+        if (hasChangeSlideType || removedChoicesCount > 0) {
             const hasVoted = await this._slideVotingResultRepository.existsByAsync({ where: { slideId } });
             if (hasVoted) {
                 throw new SimpleBadRequestException(RESPONSE_CODE.EDIT_VOTED_SLIDE_PERMISSION);
