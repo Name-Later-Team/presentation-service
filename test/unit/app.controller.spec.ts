@@ -2,7 +2,6 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { AppController } from "src/app.controller";
 import { AppService } from "src/app.service";
 import { DataResponse } from "src/core/response";
-import { PRESENTATION_ACTION_PUB_TOKEN } from "src/infrastructure/brokers/publishers";
 
 describe("AppController", () => {
     let appController: AppController;
@@ -12,12 +11,12 @@ describe("AppController", () => {
             controllers: [AppController],
             providers: [
                 AppService,
-                {
-                    provide: PRESENTATION_ACTION_PUB_TOKEN,
-                    useValue: {
-                        getResult: jest.fn(),
-                    },
-                },
+                // {
+                //     provide: PRESENTATION_ACTION_PUB_TOKEN,
+                //     useValue: {
+                //         getResult: jest.fn(),
+                //     },
+                // },
             ],
         }).compile();
 

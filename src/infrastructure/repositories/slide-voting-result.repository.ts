@@ -5,6 +5,7 @@ import { DataSource, FindManyOptions, FindOptionsWhere } from "typeorm";
 import { SlideVotingResultSchema } from "../database/schemas";
 import { GenericRepository } from "./generic.repository";
 import { ISlideVotingResultRepository } from "./interfaces";
+import { Common } from "src/common/utils";
 
 export const SLIDE_VOTING_RESULT_REPO_TOKEN = Symbol("SlideVotingResultRepository");
 
@@ -30,5 +31,16 @@ export class SlideVotingResultRepository
 
     createMultipleVotingResultsAsync(entities: Array<Partial<SlideVotingResult>>) {
         return this._repository.insert(entities);
+    }
+
+    countTotalRespondentsAsync(slideId: number, sessionNo?: number | null): Promise<{ respondents: string; }[]> {
+        const selectFields = [`COUNT(DISTINCT result.user_identifier) AS "respondents"`];
+        const builder = this._repository.createQueryBuilder("result");
+
+        const whereSession = Common.isNullOrUndefined(sessionNo) ? "" : `result.present_no = :sessionNo AND`;
+        return builder
+            .where(`${whereSession} result.slide_id = :slideId`, { sessionNo, slideId })
+            .select(selectFields)
+            .getRawMany<{ respondents: string }>();
     }
 }

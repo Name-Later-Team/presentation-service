@@ -14,3 +14,9 @@ export enum PresentPresentationActionEnum {
     CHANGE_SLIDE = "change_slide",
     QUIT = "quit",
 }
+
+export enum VotingAnswerTypeEnum {
+    CHOICES = "choices",
+    REACTION = "reaction",
+    // RANKING = "ranking",
+}

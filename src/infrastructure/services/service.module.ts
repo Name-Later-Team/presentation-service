@@ -1,11 +1,12 @@
 import { Module } from "@nestjs/common";
+import { BrokerModule } from "../brokers";
 import { DomainRepositoryModule } from "../repositories";
-import { PresentationService, PRESENTATION_SERVICE_TOKEN } from "./presentation.service";
-import { PRESENTATION_SLIDE_SERVICE_TOKEN, PresentationSlideService } from "./presentation-slide.service";
 import { AUDIENCE_SERVICE_TOKEN, AudienceService } from "./audience.service";
+import { PRESENTATION_SLIDE_SERVICE_TOKEN, PresentationSlideService } from "./presentation-slide.service";
+import { PRESENTATION_SERVICE_TOKEN, PresentationService } from "./presentation.service";
 
 @Module({
-    imports: [DomainRepositoryModule],
+    imports: [DomainRepositoryModule, BrokerModule],
     providers: [
         {
             provide: PRESENTATION_SERVICE_TOKEN,

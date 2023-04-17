@@ -12,7 +12,7 @@ export const SlideVotingResultSchema = new EntitySchema<SlideVotingResult>({
         userIdentifier: { type: "text", name: "user_identifier" },
         userDisplayName: { type: "character varying", length: 120, name: "user_display_name" },
         choiceId: { type: "integer", name: "choice_id" },
-        votedAt: { type: "timestamp with time zone", createDate: true },
+        votedAt: { type: "timestamp with time zone", createDate: true, name: "voted_at" },
         presentNo: { type: "integer", name: "present_no" },
     },
     checks: [{ expression: `"slide_id" > 0` }, { expression: `"choice_id" > 0` }, { expression: `"present_no" > 0` }],

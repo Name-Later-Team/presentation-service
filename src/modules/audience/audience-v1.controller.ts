@@ -55,7 +55,9 @@ export class AudienceControllerV1 {
         @Body(new VoteOnPresentationSlideValidationPipe()) body: AudienceVoteOnPresentationSlideDto,
     ) {
         const { presentationIdentifier, slideId } = params;
-        const { userId, choiceIds } = body;
-        await this._audienceService.voteOnPresentationSlideAsync(userId, presentationIdentifier, slideId, choiceIds);
+
+        // adding voting type to indicate the way to store result
+        const { userId, choiceIds, type } = body;
+        await this._audienceService.voteOnPresentationSlideAsync(userId, presentationIdentifier, slideId, type, choiceIds);
     }
 }

@@ -39,5 +39,10 @@ export const MESSAGE_BROKER_CONFIG = {
             type: process.env.RABBITMQ_EXCHANGE_TYPE || "",
             isDurable: Boolean(process.env.RABBITMQ_EXCHANGE_DURABLE).valueOf() || true,
         },
+
+        topics: {
+            actionTopic: process.env.RABBITMQ_PRESENTATION_ACTION_TOPIC || "",
+            votingTopic: process.env.RABBITMQ_PRESENTATION_VOTING_TOPIC || "",
+        },
     },
 };
