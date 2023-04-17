@@ -23,15 +23,15 @@ const voteOnPresentationSlideValidationSchema = Joi.object<AudienceVoteOnPresent
         .messages({
             "any.required": "Bạn phải chọn ít nhất một câu trả lời",
         }),
-    type: Joi.string()
-        .valid(...Object.values(VotingAnswerTypeEnum))
-        .required()
-        .messages({
-            "any.required": "Loại câu trả lời là bắt buộc",
-            "any.only": "Loại câu trả lời không hợp lệ",
-            "string.base": "Loại câu trả lời không hợp lệ",
-            "string.empty": "Loại câu trả lời là bắt buộc",
-        }),
+    // type: Joi.string()
+    //     .valid(...Object.values(VotingAnswerTypeEnum))
+    //     .required()
+    //     .messages({
+    //         "any.required": "Loại câu trả lời là bắt buộc",
+    //         "any.only": "Loại câu trả lời không hợp lệ",
+    //         "string.base": "Loại câu trả lời không hợp lệ",
+    //         "string.empty": "Loại câu trả lời là bắt buộc",
+    //     }),
 }).options({
     allowUnknown: true,
     stripUnknown: true,

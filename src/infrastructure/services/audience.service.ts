@@ -159,7 +159,6 @@ export class AudienceService {
         userId: string,
         presentationIdentifier: string,
         slideId: number,
-        type: string,
         choiceIds: number[],
     ) {
         const presentation = await this._presentationRepository.findOnePresentation({
@@ -209,13 +208,20 @@ export class AudienceService {
 
         // proces voting flow for specific slide type
         // * 1. Multiple choice
-        if (slide.slideType === PresentationSlideTypeEnum.MULTIPLE_CHOICE && type === VotingAnswerTypeEnum.CHOICES) {
+        if (slide.slideType === PresentationSlideTypeEnum.MULTIPLE_CHOICE) {
             await this._processVotingOnMultipleChoiceWorkflowAsync(slide, choiceIds, userId);
+            return;
         }
 
         // * 2. Reaction
-        if (type === VotingAnswerTypeEnum.REACTION) {
+        const allowReactionSlides = [
+            PresentationSlideTypeEnum.HEADING.valueOf(),
+            PresentationSlideTypeEnum.PARAGRAPH.valueOf(),
+        ];
+
+        if (allowReactionSlides.includes(slide.slideType)) {
             await this._processReactionTypeWorkflowAsync();
+            return;
         }
     }
 

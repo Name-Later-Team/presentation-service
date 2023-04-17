@@ -9,7 +9,7 @@ export interface AudienceFindOnePresentationSlideDto {
 
 export interface AudienceVoteOnPresentationSlideDto {
     userId: string;
-    type: string;
+    // type: string;
     /**
      * @description
      * - List of option id (multiple choice)
