@@ -55,6 +55,7 @@ export class AudienceControllerV1 {
         @Body(new VoteOnPresentationSlideValidationPipe()) body: AudienceVoteOnPresentationSlideDto,
     ) {
         const { presentationIdentifier, slideId } = params;
+
         const { userId, choiceIds } = body;
         await this._audienceService.voteOnPresentationSlideAsync(userId, presentationIdentifier, slideId, choiceIds);
     }

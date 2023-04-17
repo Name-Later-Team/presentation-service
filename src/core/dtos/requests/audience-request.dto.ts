@@ -9,5 +9,12 @@ export interface AudienceFindOnePresentationSlideDto {
 
 export interface AudienceVoteOnPresentationSlideDto {
     userId: string;
+    // type: string;
+    /**
+     * @description
+     * - List of option id (multiple choice)
+     * - List of reaction id (reaction choice)
+     * - List of option id (ranking)
+     */
     choiceIds: number[];
 }

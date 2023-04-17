@@ -1,4 +1,5 @@
+import { PublishPresentActionMessageDto } from "../../dtos";
+
 export interface IPresentationActionPublisher {
-    // TODO: must be redefined
-    publish(data);
+    publishPresentActionAsync(message: PublishPresentActionMessageDto): Promise<void>;
 }

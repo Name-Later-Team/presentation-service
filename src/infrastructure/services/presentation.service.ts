@@ -4,10 +4,13 @@ import * as moment from "moment";
 import { PAGINATION, RESPONSE_CODE, VOTING_CODE_GENERATION_RETRY_ATTEMPTS } from "src/common/constants";
 import { ForbiddenRequestException, SimpleBadRequestException } from "src/common/exceptions";
 import { PresentationGenerator } from "src/common/utils/generators";
-import { EditPresentationDto, PresentPresentationSlideDto } from "src/core/dtos";
+import { IPresentationActionPublisher } from "src/core/brokers";
+import { EditPresentationDto, PresentPresentationSlideDto, PublishPresentActionMessageDto } from "src/core/dtos";
 import { Presentation, PresentationSlide } from "src/core/entities";
 import { BaseService } from "src/core/services";
+import { PresentPresentationActionEnum, PresentationPaceStateEnum } from "src/core/types";
 import { FindOptionsOrder, In, Raw } from "typeorm";
+import { PRESENTATION_ACTION_PUB_TOKEN } from "../brokers/publishers";
 import {
     PRESENTATION_REPO_TOKEN,
     PRESENTATION_SLIDE_REPO_TOKEN,
@@ -22,7 +25,6 @@ import {
     IPresentationVotingCodeRepository,
     ISlideChoiceRepository,
 } from "../repositories/interfaces";
-import { PresentPresentationActionEnum, PresentationPaceStateEnum } from "src/core/types";
 
 export const PRESENTATION_SERVICE_TOKEN = Symbol("PresentationService");
 
@@ -38,6 +40,9 @@ export class PresentationService extends BaseService<Presentation> {
         private readonly _slideChoiceRepo: ISlideChoiceRepository,
         @Inject(SLIDE_VOTING_RESULT_REPO_TOKEN)
         private readonly _slideVotingResultRepository: SlideVotingResultRepository,
+
+        @Inject(PRESENTATION_ACTION_PUB_TOKEN)
+        private readonly _presentationActionPublisher: IPresentationActionPublisher,
     ) {
         super(_presentationRepository);
     }
@@ -316,6 +321,7 @@ export class PresentationService extends BaseService<Presentation> {
         const presentation = await this._presentationRepository.findOnePresentation({
             select: {
                 id: true,
+                identifier: true,
                 pace: {
                     active_slide_id: true,
                     counter: true,
@@ -327,7 +333,8 @@ export class PresentationService extends BaseService<Presentation> {
                 ownerIdentifier: userId,
                 [presentationIdentifierField]: presentationIdentifier,
             },
-        });
+        }) as Pick<Presentation, "id" | "identifier" | "pace">;
+
         if (!presentation) {
             throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTATION_NOT_FOUND);
         }
@@ -405,6 +412,15 @@ export class PresentationService extends BaseService<Presentation> {
             const dataToUpdate: Partial<Presentation> = { pace: newPace };
             await this._presentationRepository.updateRecordByIdAsync(presentation.id, dataToUpdate);
         }
+
+        // *SOCKET: publish message to queue
+        const message: PublishPresentActionMessageDto = {
+            roomId: presentation.identifier,
+            eventName: action,
+            payload: { presentationIdentifier: presentation.identifier, pace: newPace },
+        };
+
+        this._presentationActionPublisher.publishPresentActionAsync(message);
     }
 
     async deleteOnePresentationAsync(userId: string, flexiblePresentationIdentifier: string | number) {

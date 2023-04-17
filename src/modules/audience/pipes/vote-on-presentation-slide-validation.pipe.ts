@@ -2,6 +2,7 @@ import { ArgumentMetadata, Injectable, PipeTransform } from "@nestjs/common";
 import * as Joi from "joi";
 import { RequestValidationException } from "src/common/exceptions";
 import { AudienceVoteOnPresentationSlideDto } from "src/core/dtos";
+import { VotingAnswerTypeEnum } from "src/core/types";
 
 const voteOnPresentationSlideValidationSchema = Joi.object<AudienceVoteOnPresentationSlideDto>({
     userId: Joi.string().required().messages({
@@ -22,6 +23,15 @@ const voteOnPresentationSlideValidationSchema = Joi.object<AudienceVoteOnPresent
         .messages({
             "any.required": "Bạn phải chọn ít nhất một câu trả lời",
         }),
+    // type: Joi.string()
+    //     .valid(...Object.values(VotingAnswerTypeEnum))
+    //     .required()
+    //     .messages({
+    //         "any.required": "Loại câu trả lời là bắt buộc",
+    //         "any.only": "Loại câu trả lời không hợp lệ",
+    //         "string.base": "Loại câu trả lời không hợp lệ",
+    //         "string.empty": "Loại câu trả lời là bắt buộc",
+    //     }),
 }).options({
     allowUnknown: true,
     stripUnknown: true,

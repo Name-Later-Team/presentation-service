@@ -7,4 +7,9 @@ export interface ISlideChoiceRepository extends IGenericRepository<SlideChoice> 
     findManySlideChoicesAsync(options: FindManyOptions<SlideChoice>): Promise<SlideChoice[]>;
     deleteManySlideChoicesAsync(options: FindOptionsWhere<SlideChoice>): Promise<DeleteResult>;
     countSlideChoicesAsync(where: FindOptionsWhere<SlideChoice> | FindOptionsWhere<SlideChoice>[]): Promise<number>;
+
+    getChoiceWithResultAsync(
+        slideId: number,
+        sessionNo?: number | null,
+    ): Promise<(Pick<SlideChoice, "id" | "label"> & { score: string })[]>;
 }

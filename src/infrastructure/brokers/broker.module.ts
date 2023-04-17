@@ -1,7 +1,12 @@
 import { RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
 import { Logger, Module } from "@nestjs/common";
 import { MESSAGE_BROKER_CONFIG } from "../configs";
-import { PRESENTATION_ACTION_PUB_TOKEN, PresentationActionPublisher } from "./publishers";
+import {
+    PRESENTATION_ACTION_PUB_TOKEN,
+    PresentationActionPublisher,
+    VOTING_ACTION_PUB_TOKEN,
+    VotingActionPublisher,
+} from "./publishers";
 
 /**
  * @description Defines all message brokers connector that used by app
@@ -26,7 +31,13 @@ import { PRESENTATION_ACTION_PUB_TOKEN, PresentationActionPublisher } from "./pu
             logger: Logger, // bind app logger
         }),
     ],
-    providers: [{ provide: PRESENTATION_ACTION_PUB_TOKEN, useClass: PresentationActionPublisher }],
-    exports: [{ provide: PRESENTATION_ACTION_PUB_TOKEN, useClass: PresentationActionPublisher }],
+    providers: [
+        { provide: PRESENTATION_ACTION_PUB_TOKEN, useClass: PresentationActionPublisher },
+        { provide: VOTING_ACTION_PUB_TOKEN, useClass: VotingActionPublisher },
+    ],
+    exports: [
+        { provide: PRESENTATION_ACTION_PUB_TOKEN, useClass: PresentationActionPublisher },
+        { provide: VOTING_ACTION_PUB_TOKEN, useClass: VotingActionPublisher },
+    ],
 })
 export class BrokerModule {}
