@@ -14,4 +14,5 @@ export type PublishPresentActionMessageDto = BasePublishMessageDto<{
 export type PublishVotingMessageDto = BasePublishMessageDto<{
     respondents: number;
     results: Array<{ id: number; label: string; score: number[] }>;
+    slideId: number,
 }>;

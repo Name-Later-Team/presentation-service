@@ -291,6 +291,7 @@ export class AudienceService {
                     payload: {
                         respondents: respondentsToSend,
                         results: resultToSend,
+                        slideId: slide.id,
                     },
                 });
             })
