@@ -52,7 +52,7 @@ export class AudienceService {
         });
     }
 
-    async findOnePresentationAndAllSlidesByIdentifierAsync(identifier: string) {
+    async findOnePresentationByIdentifierAsync(identifier: string) {
         const presentation = await this._presentationRepository.findOnePresentation({
             where: { identifier },
             select: {
@@ -76,17 +76,17 @@ export class AudienceService {
             throw new ForbiddenRequestException(RESPONSE_CODE.JOIN_IDLE_PRESENTATION);
         }
 
-        const slides = await this._presentationSlideRepository.findManyPresentationSlidesAsync({
-            where: { presentationIdentifier: identifier },
-            select: {
-                id: true,
-                slideType: true,
-                position: true,
-            },
-            order: { position: "ASC" },
-        });
+        // const slides = await this._presentationSlideRepository.findManyPresentationSlidesAsync({
+        //     where: { presentationIdentifier: identifier },
+        //     select: {
+        //         id: true,
+        //         slideType: true,
+        //         position: true,
+        //     },
+        //     order: { position: "ASC" },
+        // });
 
-        return { ...presentation, slides };
+        return presentation;
     }
 
     async findOnePresentationSlideById(presentationIdentifier: string, slideId: number) {

@@ -1,18 +1,20 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Post } from "@nestjs/common";
-import { AUDIENCE_SERVICE_TOKEN, AudienceService } from "src/infrastructure/services";
-import {
-    FindOnePresentationByCodeValidationPipe,
-    FindOnePresentationSlideValidationPipe,
-    VoteOnPresentationSlideValidationPipe,
-} from "./pipes";
+import { RESPONSE_CODE } from "src/common/constants";
+import { SimpleBadRequestException } from "src/common/exceptions";
 import {
     AudienceFindOnePresentationByCodeDto,
+    AudienceFindOnePresentationByIdentifierDto,
     AudienceFindOnePresentationSlideDto,
     AudienceVoteOnPresentationSlideDto,
 } from "src/core/dtos";
-import { SimpleBadRequestException } from "src/common/exceptions";
-import { RESPONSE_CODE } from "src/common/constants";
 import { DataResponse } from "src/core/response";
+import { AUDIENCE_SERVICE_TOKEN, AudienceService } from "src/infrastructure/services";
+import {
+    FindOnePresentationByCodeValidationPipe,
+    FindOnePresentationByIdentifierValidationPipe,
+    FindOnePresentationSlideValidationPipe,
+    VoteOnPresentationSlideValidationPipe,
+} from "./pipes";
 
 @Controller("v1/audience")
 export class AudienceControllerV1 {
@@ -32,10 +34,11 @@ export class AudienceControllerV1 {
             throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTATION_NOT_FOUND);
         }
 
-        const presentation = await this._audienceService.findOnePresentationAndAllSlidesByIdentifierAsync(
+        const { identifier } = await this._audienceService.findOnePresentationByIdentifierAsync(
             actualVotingCode.presentationIdentifier,
         );
-        return new DataResponse(presentation);
+
+        return new DataResponse({ identifier });
     }
 
     @Get("/presentations/:presentationIdentifier/slides/:slideId")
@@ -55,8 +58,17 @@ export class AudienceControllerV1 {
         @Body(new VoteOnPresentationSlideValidationPipe()) body: AudienceVoteOnPresentationSlideDto,
     ) {
         const { presentationIdentifier, slideId } = params;
-
         const { userId, choiceIds } = body;
         await this._audienceService.voteOnPresentationSlideAsync(userId, presentationIdentifier, slideId, choiceIds);
+    }
+
+    @Get("/presentations/:presentationIdentifier")
+    async findOnePresentationByIdentifierAsync(
+        @Param(new FindOnePresentationByIdentifierValidationPipe())
+        params: AudienceFindOnePresentationByIdentifierDto,
+    ) {
+        const { presentationIdentifier } = params;
+        const presentation = await this._audienceService.findOnePresentationByIdentifierAsync(presentationIdentifier);
+        return new DataResponse(presentation);
     }
 }

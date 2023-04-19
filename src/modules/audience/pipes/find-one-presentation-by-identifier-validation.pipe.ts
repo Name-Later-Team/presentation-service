@@ -1,9 +1,9 @@
 import { ArgumentMetadata, Injectable, PipeTransform } from "@nestjs/common";
 import * as Joi from "joi";
 import { RequestValidationException } from "src/common/exceptions";
-import { AudienceFindOnePresentationSlideDto } from "src/core/dtos";
+import { AudienceFindOnePresentationByIdentifierDto } from "src/core/dtos";
 
-const findOnePresentationSlideValidationSchema = Joi.object<AudienceFindOnePresentationSlideDto>({
+const findOnePresentationByIdentifierValidationSchema = Joi.object<AudienceFindOnePresentationByIdentifierDto>({
     presentationIdentifier: Joi.string()
         .guid({ version: ["uuidv4"] })
         .required()
@@ -13,21 +13,17 @@ const findOnePresentationSlideValidationSchema = Joi.object<AudienceFindOnePrese
             "string.empty": "Mã định danh bài trình bày không hợp lệ",
             "string.guid": "Mã định danh bài trình bày không hợp lệ",
         }),
-    slideId: Joi.number().integer().greater(0).required().messages({
-        "any.required": "Mã định danh trang trình chiếu là bắt buộc",
-        "number.base": "Mã định danh trang trình chiếu không hợp lệ",
-        "number.greater": "Mã định danh trang trình chiếu không hợp lệ",
-        "number.infinity": "Mã định danh trang trình chiếu không hợp lệ",
-    }),
 }).options({
     allowUnknown: true,
     stripUnknown: true,
 });
 
 @Injectable()
-export class FindOnePresentationSlideValidationPipe implements PipeTransform<any, AudienceFindOnePresentationSlideDto> {
-    transform(query: any, metadata: ArgumentMetadata): AudienceFindOnePresentationSlideDto {
-        const result = findOnePresentationSlideValidationSchema.validate(query, { convert: true });
+export class FindOnePresentationByIdentifierValidationPipe
+    implements PipeTransform<any, AudienceFindOnePresentationByIdentifierDto>
+{
+    transform(query: any, metadata: ArgumentMetadata): AudienceFindOnePresentationByIdentifierDto {
+        const result = findOnePresentationByIdentifierValidationSchema.validate(query, { convert: true });
         if (result.error) {
             const {
                 error: { message, details },

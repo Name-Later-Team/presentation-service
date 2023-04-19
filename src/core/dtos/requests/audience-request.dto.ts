@@ -18,3 +18,7 @@ export interface AudienceVoteOnPresentationSlideDto {
      */
     choiceIds: number[];
 }
+
+export interface AudienceFindOnePresentationByIdentifierDto {
+    presentationIdentifier: string;
+}
