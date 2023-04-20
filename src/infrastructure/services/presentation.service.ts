@@ -31,7 +31,8 @@ export const PRESENTATION_SERVICE_TOKEN = Symbol("PresentationService");
 @Injectable()
 export class PresentationService extends BaseService<Presentation> {
     constructor(
-        @Inject(PRESENTATION_REPO_TOKEN) private readonly _presentationRepository: IPresentationRepository,
+        @Inject(PRESENTATION_REPO_TOKEN)
+        private readonly _presentationRepository: IPresentationRepository,
         @Inject(PRESENTATION_SLIDE_REPO_TOKEN)
         private readonly _presentationSlideRepository: IPresentationSlideRepository,
         @Inject(PRESENTATION_VOTING_CODE_REPO_TOKEN)
@@ -67,7 +68,7 @@ export class PresentationService extends BaseService<Presentation> {
         Logger.debug(JSON.stringify(createdPresentation), this.constructor.name);
 
         // generate presentation voting code
-        const code = await this._generateVotingCodeWithCheckingDuplicateAsync(8);
+        const code = await this.generateVotingCodeWithCheckingDuplicateAsync(8);
         await this._presentationVotingCodeRepo.saveRecordAsync({
             code,
             presentationIdentifier: createdPresentation.identifier,
@@ -265,7 +266,7 @@ export class PresentationService extends BaseService<Presentation> {
         }
 
         const codeLength = 8;
-        const newCode = await this._generateVotingCodeWithCheckingDuplicateAsync(codeLength);
+        const newCode = await this.generateVotingCodeWithCheckingDuplicateAsync(codeLength);
         const createdCode = await this._presentationVotingCodeRepo.saveRecordAsync({
             code: newCode,
             presentationIdentifier,
@@ -276,7 +277,7 @@ export class PresentationService extends BaseService<Presentation> {
         return createdCode;
     }
 
-    private async _generateVotingCodeWithCheckingDuplicateAsync(codeLength: number) {
+    async generateVotingCodeWithCheckingDuplicateAsync(codeLength: number) {
         let retryCount = 0;
         let isDuplicateCode = false;
         let code: string;
@@ -288,7 +289,9 @@ export class PresentationService extends BaseService<Presentation> {
             });
 
             if (retryCount >= VOTING_CODE_GENERATION_RETRY_ATTEMPTS) {
-                throw new Error("Max retry count (1 + 3 retry) for regenerating voting code");
+                throw new Error(
+                    `Max retry count (1 + ${VOTING_CODE_GENERATION_RETRY_ATTEMPTS} retry) for regenerating voting code`,
+                );
             }
 
             retryCount += 1;
@@ -318,7 +321,7 @@ export class PresentationService extends BaseService<Presentation> {
         const presentationIdentifierField = typeof presentationIdentifier === "number" ? "id" : "identifier";
 
         // Check ownership of presentaiton
-        const presentation = await this._presentationRepository.findOnePresentation({
+        const presentation = (await this._presentationRepository.findOnePresentation({
             select: {
                 id: true,
                 identifier: true,
@@ -333,7 +336,7 @@ export class PresentationService extends BaseService<Presentation> {
                 ownerIdentifier: userId,
                 [presentationIdentifierField]: presentationIdentifier,
             },
-        }) as Pick<Presentation, "id" | "identifier" | "pace">;
+        })) as Pick<Presentation, "id" | "identifier" | "pace">;
 
         if (!presentation) {
             throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTATION_NOT_FOUND);
