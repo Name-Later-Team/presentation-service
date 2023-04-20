@@ -3,11 +3,12 @@ import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { RawBodyMiddleware, RsaAuthMiddleware, trackingMiddleware } from "./common/middlewares";
 import { DatabaseModule } from "./infrastructure/database";
+import { AudienceModule } from "./modules/audience/audience.module";
 import { PresentationSlideModule } from "./modules/presentation-slides/presentation-slide.module";
 import { PresentationModule } from "./modules/presentations/presentation.module";
 
 @Module({
-    imports: [DatabaseModule, PresentationModule, PresentationSlideModule],
+    imports: [DatabaseModule, PresentationModule, PresentationSlideModule, AudienceModule],
     controllers: [AppController],
     providers: [AppService, Logger],
 })

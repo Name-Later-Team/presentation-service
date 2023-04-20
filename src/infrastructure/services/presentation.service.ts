@@ -4,10 +4,13 @@ import * as moment from "moment";
 import { PAGINATION, RESPONSE_CODE, VOTING_CODE_GENERATION_RETRY_ATTEMPTS } from "src/common/constants";
 import { ForbiddenRequestException, SimpleBadRequestException } from "src/common/exceptions";
 import { PresentationGenerator } from "src/common/utils/generators";
-import { EditBasicInfoPresentationDto, PresentPresentationSlideDto } from "src/core/dtos";
+import { IPresentationActionPublisher } from "src/core/brokers";
+import { EditPresentationDto, PresentPresentationSlideDto, PublishPresentActionMessageDto } from "src/core/dtos";
 import { Presentation, PresentationSlide } from "src/core/entities";
 import { BaseService } from "src/core/services";
+import { PresentPresentationActionEnum, PresentationPaceStateEnum } from "src/core/types";
 import { FindOptionsOrder, In, Raw } from "typeorm";
+import { PRESENTATION_ACTION_PUB_TOKEN } from "../brokers/publishers";
 import {
     PRESENTATION_REPO_TOKEN,
     PRESENTATION_SLIDE_REPO_TOKEN,
@@ -22,14 +25,14 @@ import {
     IPresentationVotingCodeRepository,
     ISlideChoiceRepository,
 } from "../repositories/interfaces";
-import { PresentPresentationActionEnum, PresentationPaceStateEnum } from "src/core/types";
 
 export const PRESENTATION_SERVICE_TOKEN = Symbol("PresentationService");
 
 @Injectable()
 export class PresentationService extends BaseService<Presentation> {
     constructor(
-        @Inject(PRESENTATION_REPO_TOKEN) private readonly _presentationRepository: IPresentationRepository,
+        @Inject(PRESENTATION_REPO_TOKEN)
+        private readonly _presentationRepository: IPresentationRepository,
         @Inject(PRESENTATION_SLIDE_REPO_TOKEN)
         private readonly _presentationSlideRepository: IPresentationSlideRepository,
         @Inject(PRESENTATION_VOTING_CODE_REPO_TOKEN)
@@ -38,6 +41,9 @@ export class PresentationService extends BaseService<Presentation> {
         private readonly _slideChoiceRepo: ISlideChoiceRepository,
         @Inject(SLIDE_VOTING_RESULT_REPO_TOKEN)
         private readonly _slideVotingResultRepository: SlideVotingResultRepository,
+
+        @Inject(PRESENTATION_ACTION_PUB_TOKEN)
+        private readonly _presentationActionPublisher: IPresentationActionPublisher,
     ) {
         super(_presentationRepository);
     }
@@ -62,7 +68,7 @@ export class PresentationService extends BaseService<Presentation> {
         Logger.debug(JSON.stringify(createdPresentation), this.constructor.name);
 
         // generate presentation voting code
-        const code = await this._generateVotingCodeWithCheckingDuplicateAsync(8);
+        const code = await this.generateVotingCodeWithCheckingDuplicateAsync(8);
         await this._presentationVotingCodeRepo.saveRecordAsync({
             code,
             presentationIdentifier: createdPresentation.identifier,
@@ -156,13 +162,14 @@ export class PresentationService extends BaseService<Presentation> {
         return { ...presentation, slides };
     }
 
-    async editBasicInfoPresentationeAsync(
+    async editPresentationeAsync(
         userId: string,
         presentationIdentifier: number | string,
-        editInfo: EditBasicInfoPresentationDto,
+        editInfo: EditPresentationDto,
     ) {
         const presentationIdentifierField = typeof presentationIdentifier === "number" ? "id" : "identifier";
         const presentation = await this._presentationRepository.findOnePresentation({
+            select: { id: true, totalSlides: true },
             where: {
                 [presentationIdentifierField]: presentationIdentifier,
                 ownerIdentifier: userId,
@@ -172,10 +179,49 @@ export class PresentationService extends BaseService<Presentation> {
         if (presentation === null) {
             throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTATION_NOT_FOUND, "Presentation not found");
         }
-        await this._presentationRepository.updateRecordByIdAsync(presentation.id, {
-            name: editInfo.name,
-            closedForVoting: editInfo.closedForVoting,
-        });
+
+        const { name, closedForVoting, slides } = editInfo;
+
+        if (slides !== undefined) {
+            // The number of given slides must be equal to the number of slides of given presentation
+            if (slides.length !== presentation.totalSlides) {
+                throw new SimpleBadRequestException(RESPONSE_CODE.NO_MATCH_SLIDE_LIST);
+            }
+
+            const slideIds = slides.map((it) => it.id);
+            const count = await this._presentationSlideRepository.countPresentationSlidesAsync({
+                presentationId: presentation.id,
+                id: In(slideIds),
+            });
+            if (count !== presentation.totalSlides) {
+                throw new SimpleBadRequestException(RESPONSE_CODE.NO_MATCH_SLIDE_LIST);
+            }
+        }
+
+        if (name !== undefined || closedForVoting !== undefined) {
+            await this._presentationRepository.updateRecordByIdAsync(presentation.id, { name, closedForVoting });
+        }
+
+        if (slides !== undefined) {
+            const slideIds = slides.map((it) => it.id);
+            const whenStatements = slides.map((it) => `WHEN ${it.id} THEN ${it.position}`);
+
+            // WHERE statement to avoid the default case, reduce number of assignments.
+            // The default case returns NULL value.
+            // Filter by presentation_id to ensure that only update slides belongs to that presentation.
+            const sql = `
+                UPDATE "presentation_slides"
+                SET position = (
+                    CASE id
+                        ${whenStatements.join("\n\t\t\t")}
+                    END
+                )
+                WHERE presentation_id = ${presentation.id} AND id IN (${slideIds.join(",")});
+            `;
+            Logger.debug(`update slide position\n${sql}`, "SQL QUERY");
+
+            await this._presentationSlideRepository.executeRawQueryAsync(sql);
+        }
     }
 
     async existsByIdentifierAsync(userId: string, presentationIdentifier: string | number, isThrowError = false) {
@@ -220,7 +266,7 @@ export class PresentationService extends BaseService<Presentation> {
         }
 
         const codeLength = 8;
-        const newCode = await this._generateVotingCodeWithCheckingDuplicateAsync(codeLength);
+        const newCode = await this.generateVotingCodeWithCheckingDuplicateAsync(codeLength);
         const createdCode = await this._presentationVotingCodeRepo.saveRecordAsync({
             code: newCode,
             presentationIdentifier,
@@ -231,7 +277,7 @@ export class PresentationService extends BaseService<Presentation> {
         return createdCode;
     }
 
-    private async _generateVotingCodeWithCheckingDuplicateAsync(codeLength: number) {
+    async generateVotingCodeWithCheckingDuplicateAsync(codeLength: number) {
         let retryCount = 0;
         let isDuplicateCode = false;
         let code: string;
@@ -243,7 +289,9 @@ export class PresentationService extends BaseService<Presentation> {
             });
 
             if (retryCount >= VOTING_CODE_GENERATION_RETRY_ATTEMPTS) {
-                throw new Error("Max retry count (1 + 3 retry) for regenerating voting code");
+                throw new Error(
+                    `Max retry count (1 + ${VOTING_CODE_GENERATION_RETRY_ATTEMPTS} retry) for regenerating voting code`,
+                );
             }
 
             retryCount += 1;
@@ -273,9 +321,10 @@ export class PresentationService extends BaseService<Presentation> {
         const presentationIdentifierField = typeof presentationIdentifier === "number" ? "id" : "identifier";
 
         // Check ownership of presentaiton
-        const presentation = await this._presentationRepository.findOnePresentation({
+        const presentation = (await this._presentationRepository.findOnePresentation({
             select: {
                 id: true,
+                identifier: true,
                 pace: {
                     active_slide_id: true,
                     counter: true,
@@ -287,7 +336,8 @@ export class PresentationService extends BaseService<Presentation> {
                 ownerIdentifier: userId,
                 [presentationIdentifierField]: presentationIdentifier,
             },
-        });
+        })) as Pick<Presentation, "id" | "identifier" | "pace">;
+
         if (!presentation) {
             throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTATION_NOT_FOUND);
         }
@@ -352,7 +402,6 @@ export class PresentationService extends BaseService<Presentation> {
         const newPace = { ...presentation.pace };
 
         if (action === PresentPresentationActionEnum.PRESENT) {
-            newPace.counter += 1;
             newPace.state = PresentationPaceStateEnum.PRESENTING;
             newPace.active_slide_id = safeSlideId;
         } else if (action === PresentPresentationActionEnum.CHANGE_SLIDE) {
@@ -366,6 +415,15 @@ export class PresentationService extends BaseService<Presentation> {
             const dataToUpdate: Partial<Presentation> = { pace: newPace };
             await this._presentationRepository.updateRecordByIdAsync(presentation.id, dataToUpdate);
         }
+
+        // *SOCKET: publish message to queue
+        const message: PublishPresentActionMessageDto = {
+            roomId: presentation.identifier,
+            eventName: action,
+            payload: { presentationIdentifier: presentation.identifier, pace: newPace },
+        };
+
+        this._presentationActionPublisher.publishPresentActionAsync(message);
     }
 
     async deleteOnePresentationAsync(userId: string, flexiblePresentationIdentifier: string | number) {
@@ -391,5 +449,14 @@ export class PresentationService extends BaseService<Presentation> {
         await this._presentationSlideRepository.deleteManyPresentationSlidesAsync({ presentationId });
         await this._slideChoiceRepo.deleteManySlideChoicesAsync({ slideId: In(slideIds) });
         await this._slideVotingResultRepository.deleteManySlideVotingResultsAsync({ slideId: In(slideIds) });
+    }
+
+    async resetResultsOfAllSlidesAsync(presentationId: number) {
+        const sql = `
+        UPDATE "presentation_slides"
+        SET session_no = session_no + 1
+        WHERE presentation_id = ${presentationId};
+        `;
+        await this._presentationSlideRepository.executeRawQueryAsync(sql);
     }
 }

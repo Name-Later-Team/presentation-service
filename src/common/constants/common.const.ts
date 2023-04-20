@@ -5,3 +5,7 @@ export const PAGINATION = {
 };
 
 export const VOTING_CODE_GENERATION_RETRY_ATTEMPTS = 3;
+
+export const PRESENTATION_SLIDE_EXTRAS_CONFIG_PATHS = {
+    ENABLE_MULTIPLE_ANSWERS: "enableMultipleAnswers",
+};

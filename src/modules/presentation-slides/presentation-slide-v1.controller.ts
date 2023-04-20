@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, Post, Put, Query, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Post, Put, Query, Req } from "@nestjs/common";
 import { Request } from "express";
 import { RESPONSE_CODE } from "src/common/constants";
 import { SimpleBadRequestException } from "src/common/exceptions";
@@ -8,7 +8,6 @@ import {
     FindOnePresentationSlideDto,
     FindOnePresentationSlideQueryDto,
     FindOnePresentatonSlideResponseDto,
-    GetVotingResultsResponseDto,
     PresentationIdentifierDto,
 } from "src/core/dtos";
 import { CreatedResponse, DataResponse } from "src/core/response";
@@ -65,13 +64,19 @@ export class PresentationSlideControllerV1 {
         const { presentationIdentifier, slideId } = pathParams;
         const includeResults = query.includeResults;
 
-        // check existence of the given presentation and throw an error if it doesn't exist
-        await this._presentationService.existsByIdentifierAsync(userId, presentationIdentifier, true);
+        const presentation = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier);
+        const slide = await this._presentationSlideService.findOnePresentationSlideByPresentationIdAndSlideIdAsync(
+            slideId,
+            presentation.id,
+        );
 
-        const slide = await this._presentationSlideService.findOnePresentationSlideAsync(slideId);
         const respData: FindOnePresentatonSlideResponseDto = { ...slide };
+
         if (includeResults) {
-            const votingResults = await this._presentationSlideService.getVotingResultsBySlideIdAsync(slideId);
+            const votingResults = await this._presentationSlideService.getVotingResultsBySlideIdAsync(
+                slideId,
+                slide.sessionNo,
+            );
             respData.votingResult = votingResults;
         }
 
@@ -86,18 +91,18 @@ export class PresentationSlideControllerV1 {
         const userId = request.userinfo.identifier;
         const { presentationIdentifier, slideId } = pathParams;
 
-        // check existence of the given presentation and slide
-        // throw an error if one of them don't exist
-        await this._presentationService.existsByIdentifierAsync(userId, presentationIdentifier, true);
-        await this._presentationSlideService.existsByPresentationIdentifierAndSlideIdAsync(
-            presentationIdentifier,
+        const presentation = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier);
+        const slide = await this._presentationSlideService.findOnePresentationSlideByPresentationIdAndSlideIdAsync(
             slideId,
-            true,
+            presentation.id,
+            false,
+        );
+        const votingResults = await this._presentationSlideService.getVotingResultsBySlideIdAsync(
+            slideId,
+            slide.sessionNo,
         );
 
-        const votingResults = await this._presentationSlideService.getVotingResultsBySlideIdAsync(slideId);
-        const respData: GetVotingResultsResponseDto = { ...votingResults, slideId };
-        return new DataResponse(respData);
+        return new DataResponse({ ...votingResults, slideId });
     }
 
     @Put("/:slideId")
@@ -115,9 +120,10 @@ export class PresentationSlideControllerV1 {
             slideId,
             editPresentationSlideDto,
         );
-        const updatedSlide = await this._presentationSlideService.findOnePresentationSlideAsync(slideId);
+        const updatedSlide = await this._presentationSlideService.findOnePresentationSlideBySlideIdAsync(slideId);
         return new DataResponse(updatedSlide);
     }
+
     @Delete("/:slideId")
     async deleteSlideAsync(
         @Req() request: Request,
@@ -127,18 +133,27 @@ export class PresentationSlideControllerV1 {
         const { presentationIdentifier, slideId } = pathParams;
 
         // check existence of the given presentation and throw an error if it doesn't exist
-        const presentation = await this._presentationService.findOnePresentationAsync(
-            userId,
-            presentationIdentifier,
-            true,
-        );
-        if (presentation.pace.state === PresentationPaceStateEnum.PRESENTING) {
-            throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTING_PRESENTATION);
-        }
-        if (presentation.totalSlides === 1) {
-            throw new SimpleBadRequestException(RESPONSE_CODE.DELETE_ONLY_SLIDE);
-        }
+        const presentation = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier);
         await this._presentationSlideService.deleteOnePresentationSlideAsync(presentation, slideId);
         return new DataResponse(null);
+    }
+
+    @Post("/:slideId/results/reset")
+    @HttpCode(204)
+    async resetVotingResultsAsync(
+        @Req() request: Request,
+        @Param(new FindOnePresentationSlideValidationPipe()) pathParams: FindOnePresentationSlideDto,
+    ) {
+        const userId = request.userinfo.identifier;
+        const { presentationIdentifier, slideId } = pathParams;
+
+        const presentation = await this._presentationService.findOnePresentationAsync(userId, presentationIdentifier);
+        const slide = await this._presentationSlideService.findOnePresentationSlideByPresentationIdAndSlideIdAsync(
+            slideId,
+            presentation.id,
+            false,
+        );
+
+        await this._presentationSlideService.updateRecordByIdAsync(slideId, { sessionNo: slide.sessionNo + 1 });
     }
 }

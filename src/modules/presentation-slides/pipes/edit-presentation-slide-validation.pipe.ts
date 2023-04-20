@@ -113,11 +113,6 @@ const editPresentationValidationSlideSchema = Joi.object<EditPresentationSlideDt
         .messages({
             "any.required": "Dữ liệu cập nhật không hợp lệ",
         }),
-    position: Joi.number().integer().greater(-1).required().messages({
-        "any.required": "Thứ tự trang trình chiếu không tồn tại",
-        "number.base": "Thứ tự trang trình chiếu không hợp lệ",
-        "number.greater": "Thứ tự trang trình chiếu không hợp lệ",
-    }),
     textSize: Joi.number().integer().min(24).max(42).required().messages({
         "any.required": "Cỡ chữ của trang trình chiếu là bắt buộc",
         "number.base": "Cỡ chữ của trang trình chiếu phải là giá trị số",

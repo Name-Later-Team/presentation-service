@@ -39,7 +39,6 @@ export interface EditPresentationSlideDto {
     showResult: boolean;
     hideInstructionBar: boolean;
     extrasConfig: string | object | null;
-    position: number;
     textSize: number;
     choices: EditPresentationSlideChoiceDto[];
 }

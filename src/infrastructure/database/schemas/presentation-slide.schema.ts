@@ -23,6 +23,7 @@ export const PresentationSlideSchema = new EntitySchema<PresentationSlide>({
         extrasConfig: { type: "text", name: "extras_config", nullable: true },
         position: { type: "smallint" },
         textSize: { type: "int", name: "text_size", default: 32, nullable: false },
+        sessionNo: { type: "int", name: "session_no", default: 1, nullable: false },
     },
     checks: [{ expression: `"presentation_id" > 0` }],
 });

@@ -8,6 +8,7 @@ import {
     SlideVotingResultSchema,
 } from "./schemas";
 import {
+    AddSessionNoColumnIntoPresentationSlideTable1681576295077,
     AddTextSizeIntoPresentationSlideTable1680573463021,
     ChangeDefaultValueOfTextSizeInPresentationSlideTable1681090963041,
 } from "./migrations";
@@ -31,6 +32,7 @@ export const dataSourceOptions: DataSourceOptions = {
     migrations: [
         AddTextSizeIntoPresentationSlideTable1680573463021,
         ChangeDefaultValueOfTextSizeInPresentationSlideTable1681090963041,
+        AddSessionNoColumnIntoPresentationSlideTable1681576295077,
     ],
 };
 

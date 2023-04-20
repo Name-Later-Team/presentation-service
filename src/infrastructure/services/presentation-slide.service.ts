@@ -7,7 +7,7 @@ import { PresentationGenerator } from "src/common/utils/generators";
 import { EditPresentationSlideDto } from "src/core/dtos";
 import { Presentation, PresentationSlide, SlideChoice } from "src/core/entities";
 import { BaseService } from "src/core/services";
-import { In, Not } from "typeorm";
+import { FindOneOptions, In, Not } from "typeorm";
 import {
     PRESENTATION_REPO_TOKEN,
     PRESENTATION_SLIDE_REPO_TOKEN,
@@ -21,6 +21,7 @@ import {
     ISlideVotingResultRepository,
 } from "../repositories/interfaces";
 import { PresentationPaceStateEnum, PresentationSlideTypeEnum } from "src/core/types";
+import { Common } from "src/common/utils";
 
 export const PRESENTATION_SLIDE_SERVICE_TOKEN = Symbol("PresentationSlideService");
 
@@ -82,30 +83,50 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         return createdSlide;
     }
 
-    async findOnePresentationSlideAsync(slideId: number) {
-        const slide = await this._presentationSlideRepository.getRecordByIdAsync(slideId);
+    private async _findOnePresentationSlideAsync(options: FindOneOptions, isIncludeChoices = true) {
+        const slide = await this._presentationSlideRepository.findOnePresentationSlideAsync(options);
         if (!slide) {
             throw new SimpleBadRequestException(RESPONSE_CODE.SLIDE_NOT_FOUND);
         }
 
-        const choices = await this._slideChoiceRepository.findManySlideChoicesAsync({
-            select: {
-                id: true,
-                label: true,
-                position: true,
-                type: true,
-                isCorrectAnswer: true,
-                metadata: true,
-            },
-            where: {
-                slideId,
-            },
-            order: {
-                position: "ASC",
-            },
-        });
+        if (isIncludeChoices) {
+            const choices = await this._slideChoiceRepository.findManySlideChoicesAsync({
+                select: {
+                    id: true,
+                    label: true,
+                    position: true,
+                    type: true,
+                    isCorrectAnswer: true,
+                    metadata: true,
+                },
+                where: { slideId: slide.id },
+                order: { position: "ASC" },
+            });
 
-        return { ...slide, choices };
+            return { ...slide, choices };
+        }
+
+        return slide;
+    }
+
+    findOnePresentationSlideBySlideIdAsync(slideId: number, isIncludeChoices = true) {
+        return this._findOnePresentationSlideAsync({ where: { id: slideId } }, isIncludeChoices);
+    }
+
+    findOnePresentationSlideByPresentationIdAndSlideIdAsync(
+        slideId: number,
+        presentationId: number,
+        isIncludeChoices = true,
+    ) {
+        return this._findOnePresentationSlideAsync(
+            {
+                where: {
+                    id: slideId,
+                    presentationId,
+                },
+            },
+            isIncludeChoices,
+        );
     }
 
     async existsByPresentationIdentifierAndSlideIdAsync(
@@ -127,13 +148,15 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         return numberOfSlides === 1;
     }
 
-    async getVotingResultsBySlideIdAsync(slideId: number) {
+    async getVotingResultsBySlideIdAsync(slideId: number, sessionNo?: number) {
         // ensure that slideId is an integer number and valid serial id
         const safeSlideId = parseInt(slideId.toString());
         if (Number.isNaN(safeSlideId) || safeSlideId < 1) {
             throw new Error("slideId must be an integer number and greater than zero");
         }
 
+        // get all sessions if `sessionNo` is null
+        const whereBySessionNo = Common.isNullOrUndefined(sessionNo) ? "" : `svr.present_no = ${sessionNo} AND`;
         const sqlVotingResults = `
         SELECT 
             sc.id AS "id",
@@ -142,15 +165,14 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         FROM "slide_choices" AS sc
             JOIN "slide_voting_results" AS svr
             ON sc.id = svr.choice_id
-        WHERE sc.slide_id = ${safeSlideId}
+        WHERE ${whereBySessionNo} sc.slide_id = ${safeSlideId}
         GROUP BY sc.id, sc.label;
         `;
 
         const sqlRespondents = `
-        SELECT 
-            COUNT(DISTINCT "user_identifier") AS "respondents"
-        FROM "slide_voting_results"
-        WHERE slide_id = ${safeSlideId};
+        SELECT COUNT(DISTINCT svr.user_identifier) AS "respondents"
+        FROM "slide_voting_results" as svr
+        WHERE ${whereBySessionNo} svr.slide_id = ${safeSlideId};
         `;
 
         // { id: number, label: string, score: string }[]
@@ -213,8 +235,20 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
             throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTING_PRESENTATION);
         }
 
-        // Cannot change slide type if it has voted
-        if (slide.slideType !== editSlideDto.slideType) {
+        const hasChangeSlideType = slide.slideType !== editSlideDto.slideType;
+        let removedChoicesCount = 0;
+
+        // Optimization: don't execute query if slide type will be changed
+        if (!hasChangeSlideType) {
+            const choiceIds = editSlideDto.choices.map((it) => it.id);
+            removedChoicesCount = await this._slideChoiceRepository.countSlideChoicesAsync({
+                slideId,
+                id: choiceIds.length > 0 ? Not(In(choiceIds)) : undefined,
+            });
+        }
+
+        // Cannot change slide type or remove any choices if it has voted
+        if (hasChangeSlideType || removedChoicesCount > 0) {
             const hasVoted = await this._slideVotingResultRepository.existsByAsync({ where: { slideId } });
             if (hasVoted) {
                 throw new SimpleBadRequestException(RESPONSE_CODE.EDIT_VOTED_SLIDE_PERMISSION);
@@ -320,17 +354,21 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
     }
 
     async deleteOnePresentationSlideAsync(presentation: Presentation, slideId: number) {
+        const { id: presentationId, totalSlides: currentTotalSlides, pace: currentPace } = presentation;
+        if (currentPace.state === PresentationPaceStateEnum.PRESENTING) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.PRESENTING_PRESENTATION);
+        } else if (currentTotalSlides === 1) {
+            throw new SimpleBadRequestException(RESPONSE_CODE.DELETE_ONLY_SLIDE);
+        }
+
         const safeSlideId = parseInt(slideId.toString());
         if (Number.isNaN(safeSlideId) || safeSlideId < 1) {
             throw new Error("slideId must be an integer number and greater than zero");
         }
-        const slide = await this._presentationSlideRepository.getRecordByIdAsync(safeSlideId);
-        const { id: presentationId, totalSlides: currentTotalSlids, pace: currentPace } = presentation;
+        const slide = await this._presentationSlideRepository.findOnePresentationSlideAsync({
+            where: { id: slideId, presentationId },
+        });
         if (!slide) {
-            throw new SimpleBadRequestException(RESPONSE_CODE.SLIDE_NOT_FOUND);
-        }
-
-        if (slide.presentationId !== presentationId) {
             throw new SimpleBadRequestException(RESPONSE_CODE.SLIDE_NOT_FOUND);
         }
 
@@ -345,18 +383,22 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
 
         //Update Presentation totalSlide and pace
         let presentationDataToUpdate: Partial<Presentation> = {
-            totalSlides: currentTotalSlids - 1,
+            totalSlides: currentTotalSlides - 1,
         };
         if (currentPace.active_slide_id === safeSlideId) {
             const activeSlide = await this._presentationSlideRepository.findOnePresentationSlideAsync({
                 where: {
                     presentationId: safePresentationId,
-                    position: safeSlidePos !== currentTotalSlids - 1 ? safeSlidePos + 1 : safeSlidePos - 1,
+                    position: safeSlidePos !== currentTotalSlides - 1 ? safeSlidePos + 1 : safeSlidePos - 1,
                 },
             });
 
+            if (!activeSlide) {
+                throw new Error("Cannot find a slide to replace");
+            }
+
             presentationDataToUpdate = {
-                totalSlides: currentTotalSlids - 1,
+                totalSlides: currentTotalSlides - 1,
                 pace: {
                     ...currentPace,
                     active_slide_id: activeSlide.id,
@@ -366,24 +408,18 @@ export class PresentationSlideService extends BaseService<PresentationSlide> {
         await this._presentationRepository.updateRecordByIdAsync(presentationId, presentationDataToUpdate);
 
         //Update Slides pos
-        if (safeSlidePos !== currentTotalSlids - 1) {
+        if (safeSlidePos !== currentTotalSlides - 1) {
             const sqlUpdateSlidePosition = `
-
             UPDATE "presentation_slides" 
-            SET position=position-1
-            WHERE presentation_id = ${safePresentationId} AND position>${safeSlidePos}
+            SET position = position - 1
+            WHERE presentation_id = ${safePresentationId} AND position > ${safeSlidePos};
             `;
+
             await this._presentationSlideRepository.executeRawQueryAsync(sqlUpdateSlidePosition);
         }
 
-        //Repositories delete
         await this._presentationSlideRepository.deleteRecordByIdAsync(slideId);
-
-        await this._slideChoiceRepository.deleteManySlideChoicesAsync({
-            slideId: safeSlideId,
-        });
-        await this._slideVotingResultRepository.deleteManySlideVotingResultsAsync({
-            slideId: safeSlideId,
-        });
+        await this._slideChoiceRepository.deleteManySlideChoicesAsync({ slideId: safeSlideId });
+        await this._slideVotingResultRepository.deleteManySlideVotingResultsAsync({ slideId: safeSlideId });
     }
 }
