@@ -2,13 +2,15 @@
  * @description Base repository interface, defines base operations that interact to the database entity
  */
 export interface IGenericRepository<T> {
-	getAllRecordsAsync(): Promise<T[]>;
+    getManyRecordAsync(limit: number, offset: number): Promise<T[]>;
 
-	getRecordByIdAsync(id: string | number): Promise<T | null>;
+    getRecordByIdAsync(id: number): Promise<T | null>;
 
-	saveRecordAsync(entity: Partial<T>): Promise<T>;
+    saveRecordAsync(entity: Partial<T>): Promise<T>;
 
-	updateRecordByIdAsync(id: string | number, entity: Partial<T>): Promise<any>;
+    updateRecordByIdAsync(id: number, entity: Partial<T>): Promise<any>;
 
-	deleteRecordByIdAsync(id: string | number): Promise<any>;
+    deleteRecordByIdAsync(id: number): Promise<any>;
+
+    executeRawQueryAsync(query: string, parameters?: any[]): Promise<any>;
 }

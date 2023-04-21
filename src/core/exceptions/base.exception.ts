@@ -21,11 +21,18 @@ export abstract class BaseException extends Error {
     }
 
     toString() {
-        const args: any[] = [this.name, this.message];
+        const args: any[] = [];
+
+        if (this.code !== null && this.code !== undefined) {
+            args.push(this.code);
+        }
+
+        args.push(this.name, this.message);
 
         if (this.errors) {
             args.push(this.errors);
         }
+
         return args.join(" - ");
     }
 }

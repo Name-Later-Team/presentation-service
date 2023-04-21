@@ -1,30 +1,28 @@
 import { IdentifierTimeTrackingEntityPart } from "./base.entity";
 
-export type PresentationPaceScope = "public" | "group";
-
 export class PresentationPace {
-	mode: string;
-	active: string;
-	state: string;
-	counter: number;
-	scope: PresentationPaceScope;
-	groupId: number | null;
+    mode: string;
+    active_slide_id: number;
+    state: string;
+    /**
+     * @author Le Hoang Anh
+     * @deprecated replace by `sessionNo` in the `PresentationSlide` class
+     */
+    counter: number;
 }
 
 export class Presentation extends IdentifierTimeTrackingEntityPart {
-	name: string;
-
-	seriesId: string;
-
-	voteKey: string;
-
-	ownerId: number;
-
-	ownerDisplayName: string;
-
-	pace: PresentationPace;
-
-	closedForVoting: boolean;
-
-	slideCount: number;
+    name: string;
+    /**
+     * @type uuid
+     */
+    identifier: string;
+    /**
+     * @description creator id | uuid
+     */
+    ownerIdentifier: string;
+    ownerDisplayName: string;
+    pace: PresentationPace;
+    closedForVoting: boolean;
+    totalSlides: number;
 }

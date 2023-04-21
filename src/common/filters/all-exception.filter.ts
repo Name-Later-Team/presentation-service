@@ -20,7 +20,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
             message: "Unknown error occured",
         } as { code: number; message: string; data: any };
 
-        let outMessage = exception;
+        let outMessage;
 
         if (exception instanceof BaseException) {
             status = exception.status;
@@ -29,24 +29,35 @@ export class AllExceptionsFilter implements ExceptionFilter {
             responseError.message = exception.message;
             responseError.data = exception.response;
 
-            outMessage = exception.toString();
+            outMessage = exception.errors && exception.toString();
         }
 
-        if (exception instanceof Error) {
-            outMessage = `${exception.name} - ${exception.message}`;
+        // handle error detaisl base on its name
+        switch (exception.name) {
+            case "RequestValidationException":
+            case "SimpleBadRequestException":
+                break;
+            case "NotFoundException":
+                status = 404;
+                responseError.code = status;
+                responseError.message = exception.message;
+                break;
+            case "UnauthorizedException":
+                outMessage = exception.toString();
+                break;
+            case "RsaException":
+                status = 401;
+                responseError.code = status;
+                responseError.message = "Unauthorized";
+                outMessage = `RsaException - ${exception.message}`;
+                break;
+            default:
+                outMessage = exception;
+                break;
         }
 
         // store error logging message
-        this._logger.error(outMessage);
-
-        // handle error detaisl base on its name
-        // const errorName = exception?.name ?? "UnknownException";
-        // switch (errorName) {
-        //     case "UnAuthorizedException":
-        //         break;
-        //     default:
-        //         break;
-        // }
+        outMessage && this._logger.error(outMessage);
 
         // Send error response
         response.statusCode = status;
