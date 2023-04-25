@@ -3,8 +3,6 @@ dotenv.config();
 
 export const APP_CONFIG = {
     appEnvironment: process.env.APP_ENV || "",
-    appProtocol: process.env.PROTOCOL || "http",
-    appHost: process.env.HOST || "localhost",
     appPort: process.env.PORT ? +process.env.PORT : 5000,
     logLevel: process.env.LOG_LEVEL || "info",
     logDriver: process.env.LOG_DRIVER || "console",
@@ -28,7 +26,6 @@ export const DATABASE_CONFIG = {
     username: process.env.DB_USERNAME || "",
     password: process.env.DB_PASSWORD || "",
     dbName: process.env.DB_NAME || "",
-    migrationsPath: process.env.DB_MIGRATION_PATH || "",
 } as const;
 
 export const MESSAGE_BROKER_CONFIG = {
