@@ -2,9 +2,6 @@ name: Presentation Service Deployment
 run-name: ${{ github.actor }} is building and deploying automatically
 
 on:
-  # push:
-  #   branches:
-  #     - master
   # pull_request:
   #   branches:
   #     - master
@@ -14,9 +11,35 @@ env:
   COMPLETE_IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}
 
 jobs:
-  build_and_publish:
-    name: Build and push Docker image to docker registry
+  build_source:
+    name: Build source code
     runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Setup NodeJS environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: "npm"
+
+      - name: Setup our npm registry
+        run: echo "${{ secrets.NPMRC_FILE_CONTENT }}" > .npmrc
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build source code
+        run: npm run build --if-present
+
+      - name: Test source code
+        run: npm test --if-present
+
+  publish_to_registry:
+    name: Build and push docker image to docker registry
+    runs-on: ubuntu-22.04
+    needs: build_source
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
@@ -45,10 +68,10 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  pull_and_up:
+  deployment:
     name: Pull and up the docker image from docker registry
     runs-on: ubuntu-22.04
-    needs: build_and_publish
+    needs: publish_to_registry
     steps:
       - name: Setup SSH key
         run: |
