@@ -2,9 +2,9 @@ name: Presentation Service Deployment
 run-name: ${{ github.actor }} is building and deploying automatically
 
 on:
-  # pull_request:
-  #   branches:
-  #     - master
+  pull_request:
+    branches:
+      - master
   workflow_dispatch:
 
 env:
@@ -76,7 +76,7 @@ jobs:
       - name: Connect to EC2 server
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key && chmod 600 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo su - && cd ${{ secrets.SSH_WORKING_DIR }} && chmod +x load_registry.sh && ./load_registry.sh ${{ DOCKER_SERVICE_NAME }} ${{ DOCKER_IMAGE_NAME }} ${{ DOCKER_IMAGE_NAME }} && exit && exit"
+          ssh -o StrictHostKeyChecking=no -i private_key ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo su - && cd ${{ secrets.SSH_WORKING_DIR }} && sudo docker pull sehcmusgroup1/presentation-service:latest && sudo docker compose up -d presentation-service01 presentation-service02 && exit && exit"
 
       - name: Clean private key
         run: rm private_key
