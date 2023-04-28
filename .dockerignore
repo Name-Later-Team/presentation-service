@@ -3,6 +3,13 @@ Dockerfile
 node_modules
 npm-debug.log
 dist
+
 .env
-test
-*.sql
+.env.*
+.eslintrc.js
+.prettierrc
+.prettierignore
+docker-compose.yml
+nest-cli.json
+.git
+.gitignore
