@@ -2,7 +2,6 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 export const APP_CONFIG = {
-    appEnvironment: process.env.APP_ENV || "",
     appPort: process.env.PORT ? +process.env.PORT : 5000,
     logLevel: process.env.LOG_LEVEL || "info",
     logDriver: process.env.LOG_DRIVER || "console",
