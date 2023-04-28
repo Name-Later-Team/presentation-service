@@ -73,15 +73,10 @@ jobs:
     runs-on: ubuntu-22.04
     needs: publish_to_registry
     steps:
-      - name: Setup SSH key
+      - name: Connect to EC2 server
         run: |
-          install -m 600 -D /dev/null ~/.ssh/id_rsa
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
-        shell: bash
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key && chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo su - && cd ${{ secrets.SSH_WORKING_DIR }} && chmod +x load_registry.sh && ./load_registry.sh ${{ DOCKER_SERVICE_NAME }} ${{ DOCKER_IMAGE_NAME }} ${{ DOCKER_IMAGE_NAME }} && exit && exit"
 
-      - name: Connect to server and deploy the app
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.SSH_WORKING_DIR }} && docker pull ${{ env.COMPLETE_IMAGE_NAME }}:${{ vars.DOCKER_IMAGE_TAG }} && docker compose -f ${{ vars.DOCKER_COMPOSE_FILE }} up -d ${{ secrets.DOCKER_SERVICE_NAME }} && exit"
-
-      - name: Clean up ssh key
-        run: rm -rf ~/.ssh
+      - name: Clean private key
+        run: rm private_key
