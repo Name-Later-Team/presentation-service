@@ -13,3 +13,6 @@ docker-compose.yml
 nest-cli.json
 .git
 .gitignore
+
+scripts
+.github

@@ -7,10 +7,10 @@ export const APP_CONFIG = {
     logDriver: process.env.LOG_DRIVER || "console",
     powerBy: process.env.POWER_BY || "",
 
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
+    clientId: process.env.CLIENT_ID || "",
+    clientSecret: process.env.CLIENT_SECRET || "",
     rsa: {
-        publicKey: process.env.RSA_PUBLIC_KEY,
+        publicKey: process.env.RSA_PUBLIC_KEY || "",
     },
 } as const;
 

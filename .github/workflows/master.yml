@@ -68,15 +68,23 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  deployment:
-    name: Pull and up the docker image from docker registry
+  # deployment:
+  #   name: Pull and up the docker image from docker registry
+  #   runs-on: ubuntu-22.04
+  #   needs: publish_to_registry
+  #   steps:
+  #     - name: Connect to EC2 server
+  #       run: |
+  #         echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key && chmod 600 private_key
+  #         ssh -o StrictHostKeyChecking=no -i private_key ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo su - && cd ${{ secrets.SSH_WORKING_DIR }} && sudo docker pull sehcmusgroup1/presentation-service:latest && sudo docker compose up -d presentation-service01 presentation-service02 && exit && exit"
+
+  #     - name: Clean private key
+  #       run: rm private_key
+
+  render-deployment:
+    name: Trigger render deploy hook
     runs-on: ubuntu-22.04
     needs: publish_to_registry
     steps:
-      - name: Connect to EC2 server
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key && chmod 600 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo su - && cd ${{ secrets.SSH_WORKING_DIR }} && sudo docker pull sehcmusgroup1/presentation-service:latest && sudo docker compose up -d presentation-service01 presentation-service02 && exit && exit"
-
-      - name: Clean private key
-        run: rm private_key
+      - name: Call depoy hook api
+        run: curl "${{ secrets.DEPLOY_HOOK_URL }}"

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: presentation-service
+    numInstances: 1
+    runtime: image
+    image:
+      url: docker.io/sehcmusgroup1/presentation-service:latest
+
+    region: singapore
+    plan: free
+    autoDeploy: false

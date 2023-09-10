@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@golevelup/nestjs-rabbitmq": "^3.6.0",
-    "@huyleminh/nodejs-sdk": "^1.0.1",
+    "@huyleminh/nodejs-sdk": "^1.0.2",
     "@nestjs/common": "^9.0.0",
     "@nestjs/core": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
